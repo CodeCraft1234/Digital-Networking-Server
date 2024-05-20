@@ -115,7 +115,7 @@ async function run() {
       const result=await campaignCollection.insertOne(filter)
       res.send(result)
   })
-  app.get('/campaigns',async(req,res)=>{
+  app.get('/campaings',async(req,res)=>{
       const result=await campaignCollection.find().toArray()
       res.send(result)
   })
@@ -132,6 +132,23 @@ async function run() {
       const result=await campaignCollection.findOne(filter)
       res.send(result)
   })
+
+  app.patch('/campaings/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id: new ObjectId(id)}
+    const body=req.body
+    console.log(body)
+    const updatenew={
+        $set:{
+          totalSpent:body.totalSpent,
+          status:body.status,
+          paymentReceived:body.paymentReceived,
+          paymentMethode:body.paymentMethode,
+        }
+    }
+    const result=await campaignCollection.updateOne(filter,updatenew)
+    res.send(result) 
+})
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
