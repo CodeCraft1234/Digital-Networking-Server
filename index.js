@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@robiul.13vbdvd.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -27,6 +27,7 @@ async function run() {
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
     const employeeCollection = client.db("Digital-Networking").collection("employeeInfo");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
+    const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -80,6 +81,49 @@ async function run() {
         },
       };
       const result = await usersInfocollection.updateOne(filter, updatedoc);
+      res.send(result);
+    });
+
+    /////////////////////////////////////////////////////////////////////////
+    //                        all employee info update part
+    ////////////////////////////////////////////////////////////////////////
+
+    app.post("/blogs", async (req, res) => {
+      const data = req.body;
+      const result = await allEmployeeCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.get("/blogs", async (req, res) => {
+      const result = await allEmployeeCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await allEmployeeCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.patch("/blogs/:id",  async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatedoc = {
+        $set: {
+          title: body.title,
+          description: body.description,
+        },
+      };
+      const result = await allEmployeeCollection.updateOne(filter, updatedoc);
+      res.send(result);
+    });
+
+    app.delete("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await allEmployeeCollection.deleteOne(filter);
       res.send(result);
     });
 
