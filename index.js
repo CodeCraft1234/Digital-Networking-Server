@@ -38,6 +38,20 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const result = await usersInfocollection.findOne(filter);
+    //   res.send(result);
+    // });
+
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersInfocollection.findOne(filter);
+      res.send(result);
+    });
+
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user?.email }
@@ -72,17 +86,39 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const body = req.body;
       const updatedoc = {
         $set: {
-          role: 'admin'
+          fullName: body.fullName,
+          companyLogo: body.companyLogo,
+          fullAddress: body.fullAddress,
+          contctNumber: body.contctNumber,
+          facebookID: body.facebookID,
         },
       };
-      const result = await usersInfocollection.updateOne(filter, updatedoc);
-      res.send(result);
+      try {
+        const result = await usersInfocollection.updateOne(filter, updatedoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user");
+      }
     });
+    
+    // app.patch("/users/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updatedoc = {
+    //     $set: {
+    //       role: 'admin'
+    //     },
+    //   };
+    //   const result = await usersInfocollection.updateOne(filter, updatedoc);
+    //   res.send(result);
+    // });
 
     /////////////////////////////////////////////////////////////////////////
     //                        all employee info update part
