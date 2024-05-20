@@ -25,7 +25,7 @@ async function run() {
     // await client.connect();
     
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
-    const employeeCollection = client.db("Digital-Networking").collection("employeeInfo");
+    const campaignCollection = client.db("Digital-Networking").collection("campaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
 
     ///////////////////////////////////////////////////////////////////////////
@@ -107,20 +107,32 @@ async function run() {
       }
     });
     
-    // app.patch("/users/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updatedoc = {
-    //     $set: {
-    //       role: 'admin'
-    //     },
-    //   };
-    //   const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //   res.send(result);
-    // });
+    ///////////////////////////////////////////////////////////////////
+    //                         campaign
+    ////////////////////////////////////////////////////////////////////
+    app.post('/campaigns',async(req,res)=>{
+      const filter=req.body
+      const result=await campaignCollection.insertOne(filter)
+      res.send(result)
+  })
+  app.get('/campaigns',async(req,res)=>{
+      const result=await campaignCollection.find().toArray()
+      res.send(result)
+  })
+  
+  app.get('/campaign/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={id:id}
+      const result=await campaignCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/campaign/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await campaignCollection.findOne(filter)
+      res.send(result)
+  })
 
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
