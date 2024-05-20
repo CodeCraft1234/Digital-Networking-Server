@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@robiul.13vbdvd.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -34,6 +34,20 @@ async function run() {
 
     app.get('/users', async (req, res) => {
       const result = await usersInfocollection.find().toArray();
+      res.send(result);
+    });
+
+    // app.get("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const result = await usersInfocollection.findOne(filter);
+    //   res.send(result);
+    // });
+
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
 
@@ -71,17 +85,39 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const body = req.body;
       const updatedoc = {
         $set: {
-          role: 'admin'
+          fullName: body.fullName,
+          companyLogo: body.companyLogo,
+          fullAddress: body.fullAddress,
+          contctNumber: body.contctNumber,
+          facebookID: body.facebookID,
         },
       };
-      const result = await usersInfocollection.updateOne(filter, updatedoc);
-      res.send(result);
+      try {
+        const result = await usersInfocollection.updateOne(filter, updatedoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user");
+      }
     });
+    
+    // app.patch("/users/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updatedoc = {
+    //     $set: {
+    //       role: 'admin'
+    //     },
+    //   };
+    //   const result = await usersInfocollection.updateOne(filter, updatedoc);
+    //   res.send(result);
+    // });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
