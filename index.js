@@ -25,7 +25,7 @@ async function run() {
     // await client.connect();
     
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
-    const employeeCollection = client.db("Digital-Networking").collection("employeeInfo");
+    const campaignCollection = client.db("Digital-Networking").collection("campaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
 
@@ -108,63 +108,69 @@ async function run() {
       }
     });
     
-    // app.patch("/users/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updatedoc = {
-    //     $set: {
-    //       role: 'admin'
-    //     },
-    //   };
-    //   const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //   res.send(result);
-    // });
-
-    /////////////////////////////////////////////////////////////////////////
-    //                        all employee info update part
-    ////////////////////////////////////////////////////////////////////////
-
-    app.post("/blogs", async (req, res) => {
-      const data = req.body;
-      const result = await allEmployeeCollection.insertOne(data);
-      res.send(result);
-    });
-
-    app.get("/blogs", async (req, res) => {
-      const result = await allEmployeeCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/blogs/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await allEmployeeCollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.patch("/blogs/:id",  async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
       const body = req.body;
       const updatedoc = {
         $set: {
-          title: body.title,
-          description: body.description,
+          fullName: body.fullName,
+          companyLogo: body.companyLogo,
+          fullAddress: body.fullAddress,
+          contctNumber: body.contctNumber,
+          facebookID: body.facebookID,
         },
       };
-      const result = await allEmployeeCollection.updateOne(filter, updatedoc);
-      res.send(result);
+      try {
+        const result = await usersInfocollection.updateOne(filter, updatedoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user");
+      }
     });
+    
+    ///////////////////////////////////////////////////////////////////
+    //                         campaign
+    ////////////////////////////////////////////////////////////////////
+    app.post('/campaigns',async(req,res)=>{
+      const filter=req.body
+      const result=await campaignCollection.insertOne(filter)
+      res.send(result)
+  })
+  app.get('/campaigns',async(req,res)=>{
+      const result=await campaignCollection.find().toArray()
+      res.send(result)
+  })
+  
+  app.get('/campaign/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={id:id}
+      const result=await campaignCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/campaign/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await campaignCollection.findOne(filter)
+      res.send(result)
+  })
 
-    app.delete("/blogs/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await allEmployeeCollection.deleteOne(filter);
-      res.send(result);
-    });
+  app.put('/campaigns/:id', async (req, res) => {
+    const { id } = req.params;
+    const { date, campaignName, pageName, tBudget, amountSpent, status, cashIn, method } = req.body;
+    try {
+      const updatedCampaign = await campaignCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { date, campaignName, pageName, tBudget, amountSpent, status, cashIn, method } },
+        { returnDocument: 'after' }
+      );
+      res.json(updatedCampaign.value);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
 
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
