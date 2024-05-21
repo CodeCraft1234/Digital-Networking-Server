@@ -28,6 +28,7 @@ async function run() {
     const campaignCollection = client.db("Digital-Networking").collection("campaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
+    const adAccountCollection = client.db("Digital-Networking").collection("ads");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -156,22 +157,51 @@ async function run() {
       res.send(result)
   })
 
-  app.put('/campaigns/:id', async (req, res) => {
-    const { id } = req.params;
-    const { date, campaignName, pageName, tBudget, amountSpent, status, cashIn, method } = req.body;
-    try {
-      const updatedCampaign = await campaignCollection.findOneAndUpdate(
-        { _id: new ObjectId(id) },
-        { $set: { date, campaignName, pageName, tBudget, amountSpent, status, cashIn, method } },
-        { returnDocument: 'after' }
-      );
-      res.json(updatedCampaign.value);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+  app.patch('/campaings/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id: new ObjectId(id)}
+    const body=req.body
+    console.log(body)
+  
+    const updatenew={
+        $set:{
+          tBudget:body.tBudget,
+          amountSpent:body.amountSpent,
+          status:body.status,
+          cashIn:body.cashIn,
+          method:body.method,
+        }
     }
-  });
+    const result=await campaignCollection.updateOne(filter,updatenew)
+    res.send(result) 
+})
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+    ///////////////////////////// ad account table ////////////////////
+    app.post('/ads',async(req,res)=>{
+      const filter=req.body
+      const result=await adAccountCollection.insertOne(filter)
+      res.send(result)
+  })
+  app.get('/ads',async(req,res)=>{
+      const result=await adAccountCollection.find().toArray()
+      res.send(result)
+  })
+  
+  app.get('/ads/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={id:id}
+      const result=await adAccountCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/ads/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await adAccountCollection.findOne(filter)
+      res.send(result)
+  })
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
