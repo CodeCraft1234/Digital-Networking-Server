@@ -27,6 +27,8 @@ async function run() {
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
     const campaignCollection = client.db("Digital-Networking").collection("campaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
+    const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
+    const adAccountCollection = client.db("Digital-Networking").collection("ads");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -107,6 +109,28 @@ async function run() {
       }
     });
     
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const body = req.body;
+      const updatedoc = {
+        $set: {
+          fullName: body.fullName,
+          companyLogo: body.companyLogo,
+          fullAddress: body.fullAddress,
+          contctNumber: body.contctNumber,
+          facebookID: body.facebookID,
+        },
+      };
+      try {
+        const result = await usersInfocollection.updateOne(filter, updatedoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user");
+      }
+    });
+    
     ///////////////////////////////////////////////////////////////////
     //                         campaign
     ////////////////////////////////////////////////////////////////////
@@ -133,7 +157,51 @@ async function run() {
       res.send(result)
   })
 
+  app.patch('/campaings/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id: new ObjectId(id)}
+    const body=req.body
+    console.log(body)
+  
+    const updatenew={
+        $set:{
+          tBudget:body.tBudget,
+          amountSpent:body.amountSpent,
+          status:body.status,
+          cashIn:body.cashIn,
+          method:body.method,
+        }
+    }
+    const result=await campaignCollection.updateOne(filter,updatenew)
+    res.send(result) 
+})
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+    ///////////////////////////// ad account table ////////////////////
+    app.post('/ads',async(req,res)=>{
+      const filter=req.body
+      const result=await adAccountCollection.insertOne(filter)
+      res.send(result)
+  })
+  app.get('/ads',async(req,res)=>{
+      const result=await adAccountCollection.find().toArray()
+      res.send(result)
+  })
+  
+  app.get('/ads/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={id:id}
+      const result=await adAccountCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/ads/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await adAccountCollection.findOne(filter)
+      res.send(result)
+  })
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
