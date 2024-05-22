@@ -59,29 +59,24 @@ async function run() {
       const user = req.body;
       const query = { email: user?.email }
       const existingUser = await usersInfocollection.findOne(query);
-
       if (existingUser) {
         return res.send({ message: 'user already exists' })
       }
-
       const result = await usersInfocollection.insertOne(user);
       res.send(result);
     });
 
     app.get('/users/admin/:email',  async (req, res) => {
       const email = req.params.email;
-
       if (req.decoded.email !== email) {
         res.send({ admin: false })
       }
-
       const query = { email: email }
       const user = await usersInfocollection.findOne(query);
       const result = { admin: user?.role === 'admin' }
       res.send(result);
     })
 
- 
     app.delete("/users/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -100,6 +95,7 @@ async function run() {
           fullAddress: body.fullAddress,
           contctNumber: body.contctNumber,
           facebookID: body.facebookID,
+          bkashPersonal:body.bkashPersonal
         },
       };
       try {
@@ -111,17 +107,68 @@ async function run() {
       }
     });
     
-    app.patch("/users/:email", async (req, res) => {
+    // app.patch("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const body = req.body;
+    //   const updatedoc = {
+    //     $set: {
+    //       nagadPersonal:body.nagadPersonal
+    //     },
+    //   };
+    //   try {
+    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
+    //     res.send(result);
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send("Error updating user");
+    //   }
+    // });
+    // app.patch("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const body = req.body;
+    //   const updatedoc = {
+    //     $set: {
+    //       rocketPersonal:body.rocketPersonal,
+    //     },
+    //   };
+    //   try {
+    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
+    //     res.send(result);
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send("Error updating user");
+    //   }
+    // });
+    // app.patch("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const body = req.body;
+    //   const updatedoc = {
+    //     $set: {
+    //       bkashPersonal:body.bkashPersonal,
+    //     },
+    //   };
+    //   try {
+    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
+    //     res.send(result);
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send("Error updating user");
+    //   }
+    // });
+    
+    app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const body = req.body;
       const updatedoc = {
         $set: {
-          fullName: body.fullName,
-          companyLogo: body.companyLogo,
-          fullAddress: body.fullAddress,
-          contctNumber: body.contctNumber,
-          facebookID: body.facebookID,
+          bkashMarcent:body.bkashMarcent,
+          bkashPersonal:body.bkashPersonal,
+          nagadPersonal:body.nagadPersonal,
+          rocketPersonal:body.rocketPersonal,
         },
       };
       try {
@@ -133,6 +180,8 @@ async function run() {
       }
     });
     
+
+
     ///////////////////////////////////////////////////////////////////
     //                         campaign
     ////////////////////////////////////////////////////////////////////
@@ -141,11 +190,14 @@ async function run() {
       const result=await campaignCollection.insertOne(filter)
       res.send(result)
   })
-  app.get('/campaigns',async(req,res)=>{
-      const result=await campaignCollection.find().toArray()
-      res.send(result)
-  })
-  
+
+  app.get('/campaings',async(req,res)=>{
+    const email=req.query.email
+    const query={email:email }
+    const result=await campaignCollection.find(query).toArray()
+    res.send(result) 
+})
+
   app.get('/campaign/:id',async(req,res)=>{
     const id=req.params.id
     const filter={id:id}
@@ -163,35 +215,40 @@ async function run() {
     const id=req.params.id
     const filter={_id: new ObjectId(id)}
     const body=req.body
-    console.log(body)
-  
     const updatenew={
         $set:{
-          tBudget:body.tBudget,
-          amountSpent:body.amountSpent,
+          previousPayment:body.previousPayment,
           status:body.status,
+          totalSpent:body.totalSpent,
+          dollerRate:body.dollerRate,
+          tSpent:body.tSpent,
           cashIn:body.cashIn,
           method:body.method,
         }
     }
+    
     const result=await campaignCollection.updateOne(filter,updatenew)
     res.send(result) 
 })
 
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+   ///////////////////////////// ad account table ////////////////////
+   app.post('/ads',async(req,res)=>{
+    const filter=req.body
+    const result=await adAccountCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/ads',async(req,res)=>{
+    const result=await adAccountCollection.find().toArray()
+    res.send(result)
+})
 
-    ///////////////////////////// ad account table ////////////////////
-    app.post('/ads',async(req,res)=>{
-      const filter=req.body
-      const result=await adAccountCollection.insertOne(filter)
-      res.send(result)
-  })
-  app.get('/ads',async(req,res)=>{
-      const result=await adAccountCollection.find().toArray()
-      res.send(result)
-  })
-  
-  app.get('/ads/:id',async(req,res)=>{
+app.get('/ads/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await adAccountCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/ads/:id',async(req,res)=>{
     const id=req.params.id
     const filter={id:id}
       const result=await adAccountCollection.find(filter).toArray()
