@@ -31,6 +31,7 @@ async function run() {
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
     const salaryCollection = client.db("Digital-Networking").collection("salary");
     const userAdCollection = client.db("Digital-Networking").collection("userad");
+    const workListCollection = client.db("Digital-Networking").collection("works");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -247,6 +248,29 @@ app.get('/userad/:id',async(req,res)=>{
     const id=req.params.id
     const filter={_id:new ObjectId(id)}
     const result=await userAdCollection.findOne(filter)
+    res.send(result)
+})
+  /////////// own work list table ////////////////////
+  app.post('/works',async(req,res)=>{
+    const filter=req.body
+    const result=await workListCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/works',async(req,res)=>{
+    const result=await workListCollection.find().toArray()
+    res.send(result)
+})
+
+app.get('/works/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await workListCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/works/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await workListCollection.findOne(filter)
     res.send(result)
 })
 
