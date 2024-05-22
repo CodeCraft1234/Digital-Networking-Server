@@ -29,6 +29,9 @@ async function run() {
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
+    const salaryCollection = client.db("Digital-Networking").collection("salary");
+    const userAdCollection = client.db("Digital-Networking").collection("userad");
+    const workListCollection = client.db("Digital-Networking").collection("works");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -197,14 +200,85 @@ app.get('/ads/:id',async(req,res)=>{
 })
 app.get('/ads/:id',async(req,res)=>{
     const id=req.params.id
-    const filter={_id:new ObjectId(id)}
-    const result=await adAccountCollection.findOne(filter)
+    const filter={id:id}
+      const result=await adAccountCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/ads/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await adAccountCollection.findOne(filter)
+      res.send(result)
+  })
+  ////////////////// employee salary table ////////////////////
+  app.post('/salary',async(req,res)=>{
+    const filter=req.body
+    const result=await salaryCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/salary',async(req,res)=>{
+    const result=await salaryCollection.find().toArray()
     res.send(result)
 })
 
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+app.get('/salary/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await salaryCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/salary/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await salaryCollection.findOne(filter)
+    res.send(result)
+})
+  /////////// user ad account activities table ////////////////////
+  app.post('/userad',async(req,res)=>{
+    const filter=req.body
+    const result=await userAdCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/userad',async(req,res)=>{
+    const result=await userAdCollection.find().toArray()
+    res.send(result)
+})
 
+app.get('/userad/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await userAdCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/userad/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await userAdCollection.findOne(filter)
+    res.send(result)
+})
+  /////////// own work list table ////////////////////
+  app.post('/works',async(req,res)=>{
+    const filter=req.body
+    const result=await workListCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/works',async(req,res)=>{
+    const result=await workListCollection.find().toArray()
+    res.send(result)
+})
 
+app.get('/works/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await workListCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/works/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await workListCollection.findOne(filter)
+    res.send(result)
+})
 
   } finally {
     // Ensures that the client will close when you finish/error
