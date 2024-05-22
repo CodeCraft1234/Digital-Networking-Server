@@ -26,6 +26,7 @@ async function run() {
     
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
     const campaignCollection = client.db("Digital-Networking").collection("campaigns");
+    const userCampaignCollection = client.db("Digital-Networking").collection("usercampaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
@@ -177,6 +178,48 @@ async function run() {
         }
     }
     const result=await campaignCollection.updateOne(filter,updatenew)
+    res.send(result) 
+})
+    ///////////////////////////////////////////////////////////////////
+    //                         user campaign
+    ////////////////////////////////////////////////////////////////////
+    app.post('/usercampaigns',async(req,res)=>{
+      const filter=req.body
+      const result=await userCampaignCollection.insertOne(filter)
+      res.send(result)
+  })
+  app.get('/usercampaigns',async(req,res)=>{
+      const result=await userCampaignCollection.find().toArray()
+      res.send(result)
+  })
+  
+  app.get('/usercampaigns/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={id:id}
+      const result=await userCampaignCollection.find(filter).toArray()
+      res.send(result)
+  })
+  app.get('/usercampaigns/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await userCampaignCollection.findOne(filter)
+      res.send(result)
+  })
+
+  app.patch('/usercampaigns/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id: new ObjectId(id)}
+    const body=req.body
+    console.log(body)
+  
+    const updatenew={
+        $set:{
+          userName:body.userName,
+          email:body.email,
+          phonenumber:body.phonenumber,
+        }
+    }
+    const result=await userCampaignCollection.updateOne(filter,updatenew)
     res.send(result) 
 })
 
