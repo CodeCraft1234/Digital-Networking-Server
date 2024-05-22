@@ -29,6 +29,7 @@ async function run() {
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
+    const salaryCollection = client.db("Digital-Networking").collection("salary");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -201,6 +202,29 @@ async function run() {
       const result=await adAccountCollection.findOne(filter)
       res.send(result)
   })
+  ////////////////// employee salary table ////////////////////
+  app.post('/salary',async(req,res)=>{
+    const filter=req.body
+    const result=await salaryCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/salary',async(req,res)=>{
+    const result=await salaryCollection.find().toArray()
+    res.send(result)
+})
+
+app.get('/salary/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await salaryCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/salary/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await salaryCollection.findOne(filter)
+    res.send(result)
+})
 
   } finally {
     // Ensures that the client will close when you finish/error
