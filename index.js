@@ -30,6 +30,7 @@ async function run() {
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
     const salaryCollection = client.db("Digital-Networking").collection("salary");
+    const userAdCollection = client.db("Digital-Networking").collection("userad");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -223,6 +224,29 @@ app.get('/salary/:id',async(req,res)=>{
     const id=req.params.id
     const filter={_id:new ObjectId(id)}
     const result=await salaryCollection.findOne(filter)
+    res.send(result)
+})
+  /////////// user ad account activities table ////////////////////
+  app.post('/userad',async(req,res)=>{
+    const filter=req.body
+    const result=await userAdCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/userad',async(req,res)=>{
+    const result=await userAdCollection.find().toArray()
+    res.send(result)
+})
+
+app.get('/userad/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await userAdCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/userad/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await userAdCollection.findOne(filter)
     res.send(result)
 })
 
