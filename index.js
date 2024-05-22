@@ -32,6 +32,7 @@ async function run() {
     const salaryCollection = client.db("Digital-Networking").collection("salary");
     const userAdCollection = client.db("Digital-Networking").collection("userad");
     const workListCollection = client.db("Digital-Networking").collection("works");
+    const paymentHistoryCollection = client.db("Digital-Networking").collection("payments");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -328,6 +329,29 @@ app.get('/works/:id',async(req,res)=>{
     const id=req.params.id
     const filter={_id:new ObjectId(id)}
     const result=await workListCollection.findOne(filter)
+    res.send(result)
+})
+  /////////// payment history table ////////////////////
+  app.post('/payments',async(req,res)=>{
+    const filter=req.body
+    const result=await paymentHistoryCollection.insertOne(filter)
+    res.send(result)
+})
+app.get('/payments',async(req,res)=>{
+    const result=await paymentHistoryCollection.find().toArray()
+    res.send(result)
+})
+
+app.get('/payments/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={id:id}
+    const result=await paymentHistoryCollection.find(filter).toArray()
+    res.send(result)
+})
+app.get('/payments/:id',async(req,res)=>{
+    const id=req.params.id
+    const filter={_id:new ObjectId(id)}
+    const result=await paymentHistoryCollection.findOne(filter)
     res.send(result)
 })
 
