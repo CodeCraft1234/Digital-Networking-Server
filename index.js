@@ -104,62 +104,11 @@ async function run() {
         res.status(500).send("Error updating user");
       }
     });
+  
     
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       nagadPersonal:body.nagadPersonal
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       rocketPersonal:body.rocketPersonal,
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       bkashPersonal:body.bkashPersonal,
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    
-    app.put("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
       const body = req.body;
       const updatedoc = {
         $set: {
