@@ -255,6 +255,7 @@ app.get('/ads/:id',async(req,res)=>{
       const result=await adAccountCollection.findOne(filter)
       res.send(result)
   })
+
   ////////////////// employee salary table ////////////////////
   app.post('/salary',async(req,res)=>{
     const filter=req.body
@@ -319,6 +320,26 @@ app.get('/userad/:id',async(req,res)=>{
     const result=await userAdCollection.findOne(filter)
     res.send(result)
 })
+
+app.patch('/userad/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={_id: new ObjectId(id)}
+  const body=req.body
+  console.log(body)
+
+  const updatenew={
+      $set:{
+        date:body.date,
+        threshold:body.threshold,
+        currentBalance:body.currentBalance,
+        totalSpent:body.totalSpent,
+        status:body.status,
+      }
+  }
+  const result=await userAdCollection.updateOne(filter,updatenew)
+  res.send(result) 
+}) 
+
   /////////// own work list table ////////////////////
   app.post('/works',async(req,res)=>{
     const filter=req.body
