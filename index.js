@@ -26,14 +26,17 @@ async function run() {
     
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
     const campaignCollection = client.db("Digital-Networking").collection("campaigns");
-    const userCampaignCollection = client.db("Digital-Networking").collection("usercampaigns");
     const businessTraCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const allEmployeeCollection = client.db("Digital-Networking").collection("business-transactions-info");
     const adAccountCollection = client.db("Digital-Networking").collection("ads");
     const salaryCollection = client.db("Digital-Networking").collection("salary");
     const userAdCollection = client.db("Digital-Networking").collection("userad");
     const workListCollection = client.db("Digital-Networking").collection("works");
-    const paymentHistoryCollection = client.db("Digital-Networking").collection("payments");
+    const OwnSelaryCollection = client.db("Digital-Networking").collection("OwnSelaryCollection");
+
+
+
+
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -44,16 +47,23 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const result = await usersInfocollection.findOne(filter);
-    //   res.send(result);
-    // });
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await usersInfocollection.findOne(filter);
+      res.send(result);
+    });
 
     app.get("/users/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
+      const result = await usersInfocollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
@@ -113,7 +123,7 @@ async function run() {
     
     app.put("/users/:id", async (req, res) => {
       const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
+      const filter = { email: new ObjectId(id) };
       const body = req.body;
       const updatedoc = {
         $set: {
@@ -183,48 +193,6 @@ async function run() {
     const result=await campaignCollection.updateOne(filter,updatenew)
     res.send(result) 
 })
-    ///////////////////////////////////////////////////////////////////
-    //                         user campaign
-    ////////////////////////////////////////////////////////////////////
-    app.post('/usercampaigns',async(req,res)=>{
-      const filter=req.body
-      const result=await userCampaignCollection.insertOne(filter)
-      res.send(result)
-  })
-  app.get('/usercampaigns',async(req,res)=>{
-      const result=await userCampaignCollection.find().toArray()
-      res.send(result)
-  })
-  
-  app.get('/usercampaigns/:id',async(req,res)=>{
-    const id=req.params.id
-    const filter={id:id}
-      const result=await userCampaignCollection.find(filter).toArray()
-      res.send(result)
-  })
-  app.get('/usercampaigns/:id',async(req,res)=>{
-      const id=req.params.id
-      const filter={_id:new ObjectId(id)}
-      const result=await userCampaignCollection.findOne(filter)
-      res.send(result)
-  })
-
-  app.patch('/usercampaigns/:id',async(req,res)=>{
-    const id=req.params.id
-    const filter={_id: new ObjectId(id)}
-    const body=req.body
-    console.log(body)
-  
-    const updatenew={
-        $set:{
-          userName:body.userName,
-          email:body.email,
-          phonenumber:body.phonenumber,
-        }
-    }
-    const result=await userCampaignCollection.updateOne(filter,updatenew)
-    res.send(result) 
-})
 
    ///////////////////////////// ad account table ////////////////////
    app.post('/ads',async(req,res)=>{
@@ -289,6 +257,7 @@ app.patch('/salary/:id',async(req,res)=>{
         paid:body.paid,
         saleryRate:body.saleryRate,
         bonus:body.bonus,
+        mounth:body.mounth
       }
   }
   
@@ -342,29 +311,26 @@ app.get('/works/:id',async(req,res)=>{
     const result=await workListCollection.findOne(filter)
     res.send(result)
 })
-  /////////// payment history table ////////////////////
-  app.post('/payments',async(req,res)=>{
-    const filter=req.body
-    const result=await paymentHistoryCollection.insertOne(filter)
-    res.send(result)
-})
-app.get('/payments',async(req,res)=>{
-    const result=await paymentHistoryCollection.find().toArray()
-    res.send(result)
+
+
+app.post('/ownSelary',async(req,res)=>{
+  const filter=req.body
+  const result=await OwnSelaryCollection.insertOne(filter)
+  res.send(result)
 })
 
-app.get('/payments/:id',async(req,res)=>{
-  const id=req.params.id
-  const filter={id:id}
-    const result=await paymentHistoryCollection.find(filter).toArray()
-    res.send(result)
+// app.get('/ownSelary',async(req,res)=>{
+//   const result=await OwnSelaryCollection.find().toArray()
+//   res.send(result)
+// })
+
+app.get('/ownSelary',async(req,res)=>{
+  const email=req.query.email
+  const query={email:email }
+  const result=await OwnSelaryCollection.find(query).toArray()
+  res.send(result) 
 })
-app.get('/payments/:id',async(req,res)=>{
-    const id=req.params.id
-    const filter={_id:new ObjectId(id)}
-    const result=await paymentHistoryCollection.findOne(filter)
-    res.send(result)
-})
+
 
   } finally {
     // Ensures that the client will close when you finish/error
@@ -373,7 +339,7 @@ app.get('/payments/:id',async(req,res)=>{
 }
 run().catch(console.dir);
 
-
+console.log()
 app.get("/", (req, res) => {
   res.send("hello canteen");
 });
