@@ -109,62 +109,11 @@ async function run() {
         res.status(500).send("Error updating user");
       }
     });
+  
     
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       nagadPersonal:body.nagadPersonal
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       rocketPersonal:body.rocketPersonal,
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
-    //   const updatedoc = {
-    //     $set: {
-    //       bkashPersonal:body.bkashPersonal,
-    //     },
-    //   };
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updatedoc);
-    //     res.send(result);
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
-    
-    app.put("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
       const body = req.body;
       const updatedoc = {
         $set: {
@@ -207,6 +156,7 @@ async function run() {
       const result=await campaignCollection.find(filter).toArray()
       res.send(result)
   })
+  
   app.get('/campaign/:id',async(req,res)=>{
       const id=req.params.id
       const filter={_id:new ObjectId(id)}
@@ -328,6 +278,24 @@ app.get('/salary/:id',async(req,res)=>{
     const result=await salaryCollection.findOne(filter)
     res.send(result)
 })
+
+app.patch('/salary/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={_id: new ObjectId(id)}
+  const body=req.body
+  const updatenew={
+      $set:{
+        totalWork:body.totalWork,
+        paid:body.paid,
+        saleryRate:body.saleryRate,
+        bonus:body.bonus,
+      }
+  }
+  
+  const result=await salaryCollection.updateOne(filter,updatenew)
+  res.send(result) 
+})
+
   /////////// user ad account activities table ////////////////////
   app.post('/userad',async(req,res)=>{
     const filter=req.body
