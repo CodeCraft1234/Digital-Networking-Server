@@ -154,6 +154,7 @@ async function run() {
       const result=await campaignCollection.find(filter).toArray()
       res.send(result)
   })
+  
   app.get('/campaign/:id',async(req,res)=>{
       const id=req.params.id
       const filter={_id:new ObjectId(id)}
@@ -233,6 +234,24 @@ app.get('/salary/:id',async(req,res)=>{
     const result=await salaryCollection.findOne(filter)
     res.send(result)
 })
+
+app.patch('/salary/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={_id: new ObjectId(id)}
+  const body=req.body
+  const updatenew={
+      $set:{
+        totalWork:body.totalWork,
+        paid:body.paid,
+        saleryRate:body.saleryRate,
+        bonus:body.bonus,
+      }
+  }
+  
+  const result=await salaryCollection.updateOne(filter,updatenew)
+  res.send(result) 
+})
+
   /////////// user ad account activities table ////////////////////
   app.post('/userad',async(req,res)=>{
     const filter=req.body
