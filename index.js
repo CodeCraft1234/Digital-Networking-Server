@@ -34,6 +34,10 @@ async function run() {
     const workListCollection = client.db("Digital-Networking").collection("works");
     const OwnSelaryCollection = client.db("Digital-Networking").collection("OwnSelaryCollection");
 
+    const clietCollection = client.db("Digital-Networking").collection("client");
+
+
+
 
 
 
@@ -50,6 +54,8 @@ async function run() {
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
+
+
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
@@ -57,16 +63,19 @@ async function run() {
     app.get("/users/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
+
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
 
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
-      const result = await usersInfocollection.findOne(filter);
-      res.send(result);
-    });
+
+    // app.get("/users/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const result = await usersInfocollection.findOne(filter);
+    //   res.send(result);
+    // });
+
 
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -89,13 +98,6 @@ async function run() {
       const result = { admin: user?.role === 'admin' }
       res.send(result);
     })
-
-    app.delete("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await usersInfocollection.deleteOne(filter);
-      res.send(result);
-    });
 
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -160,10 +162,15 @@ async function run() {
     res.send(result) 
 })
 
-  app.get('/campaign/:id',async(req,res)=>{
-    const id=req.params.id
-    const filter={id:id}
-      const result=await campaignCollection.find(filter).toArray()
+  app.get('/campaigns',async(req,res)=>{
+      const result=await campaignCollection.find().toArray()
+      res.send(result)
+  })
+
+  app.get('/campaigns/:email',async(req,res)=>{
+    const email  =req.params.email
+    const filter={ email:email }
+      const result=await campaignCollection.findOne(filter)
       res.send(result)
   })
   
@@ -334,16 +341,17 @@ app.get('/works/:id',async(req,res)=>{
 })
 
 
+
 app.post('/ownSelary',async(req,res)=>{
   const filter=req.body
   const result=await OwnSelaryCollection.insertOne(filter)
   res.send(result)
 })
 
-// app.get('/ownSelary',async(req,res)=>{
-//   const result=await OwnSelaryCollection.find().toArray()
-//   res.send(result)
-// })
+app.get('/ownSelary',async(req,res)=>{
+  const result=await OwnSelaryCollection.find().toArray()
+  res.send(result)
+})
 
 app.get('/ownSelary',async(req,res)=>{
   const email=req.query.email
@@ -351,6 +359,53 @@ app.get('/ownSelary',async(req,res)=>{
   const result=await OwnSelaryCollection.find(query).toArray()
   res.send(result) 
 })
+
+////////////////////////////////////////////////////////
+//                 client
+////////////////////////////////////////////////////////
+
+app.post('/clients',async(req,res)=>{
+      const filter=req.body
+      const result=await clietCollection.insertOne(filter)
+      res.send(result)
+  })
+
+  app.get('/clients',async(req,res)=>{
+      const result=await clietCollection.find().toArray()
+      res.send(result)
+  })
+
+
+
+  app.get('/clients',async(req,res)=>{
+    const email=req.query.email
+    const query={email:email }
+    const result=await clietCollection.find(query).toArray()
+    res.send(result) 
+})
+
+  app.get('/clients/:email',async(req,res)=>{
+    const email  =req.params.email
+    const filter={ email:email }
+      const result=await clietCollection.findOne(filter)
+      res.send(result)
+  })
+  
+  app.get('/clients/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id:new ObjectId(id)}
+      const result=await clietCollection.findOne(filter)
+      res.send(result)
+  })
+
+
+  // app.get('/clients/:email',async(req,res)=>{
+  //   const email  =req.params.email
+  //   const filter={ email:email }
+  //     const result=await clietCollection.findOne(filter)
+  //     res.send(result)
+  // })
+
 
 
   } finally {
