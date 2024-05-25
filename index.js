@@ -33,7 +33,10 @@ async function run() {
     const userAdCollection = client.db("Digital-Networking").collection("userad");
     const workListCollection = client.db("Digital-Networking").collection("works");
     const OwnSelaryCollection = client.db("Digital-Networking").collection("OwnSelaryCollection");
+
     const clietCollection = client.db("Digital-Networking").collection("client");
+
+
 
 
 
@@ -51,9 +54,20 @@ async function run() {
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
+
+
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
+
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const result = await usersInfocollection.findOne(filter);
+      res.send(result);
+    });
+
 
     // app.get("/users/:id", async (req, res) => {
     //   const id = req.params.id;
@@ -61,6 +75,7 @@ async function run() {
     //   const result = await usersInfocollection.findOne(filter);
     //   res.send(result);
     // });
+
 
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -326,6 +341,7 @@ app.get('/works/:id',async(req,res)=>{
 })
 
 
+
 app.post('/ownSelary',async(req,res)=>{
   const filter=req.body
   const result=await OwnSelaryCollection.insertOne(filter)
@@ -389,6 +405,7 @@ app.post('/clients',async(req,res)=>{
   //     const result=await clietCollection.findOne(filter)
   //     res.send(result)
   // })
+
 
 
   } finally {
