@@ -54,9 +54,12 @@ async function run() {
     const clietCollection = client
       .db("Digital-Networking")
       .collection("client");
-    const adAdsCollection = client
+    const adsAccountCollection = client
       .db("Digital-Networking")
-      .collection("adAds");
+      .collection("adsAccount");
+    const MpaymentCollection = client
+      .db("Digital-Networking")
+      .collection("Mpayment");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -82,13 +85,6 @@ async function run() {
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
-
-    // app.get("/users/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const result = await usersInfocollection.findOne(filter);
-    //   res.send(result);
-    // });
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -197,13 +193,9 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
-          previousPayment: body.previousPayment,
           status: body.status,
-          totalSpent: body.totalSpent,
-          dollerRate: body.dollerRate,
           tSpent: body.tSpent,
-          cashIn: body.cashIn,
-          method: body.method,
+          dollerRate: body.dollerRate,
         },
       };
 
@@ -404,48 +396,85 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/clients/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { clientEmail: email };
+      const body = req.body;
+      
+      console.log('Received email:', email);
+      console.log('Received body:', body);
+  
+      const updatenew = {
+          $set: {
+              tSpent: body.tSpent,
+              tPayment: body.tPayment,
+              tBudged: body.tBudged,
+              tBill: body.tBill,
+          },
+      };
+  
+      try {
+          const result = await clietCollection.updateOne(filter, updatenew); // Ensure clientCollection is correctly initialized
+          console.log('Update result:', result);
+          res.send(result);
+      } catch (error) {
+          console.error('Error updating client:', error);
+          res.status(500).send({ error: 'An error occurred while updating the client' });
+      }
+  });
+    
+
     ////////////////////////////////////////////////////////
     //                 ads ad account
     ////////////////////////////////////////////////////////
 
-    app.post("/adAds", async (req, res) => {
+    app.post("/adsAccount", async (req, res) => {
       const filter = req.body;
-      const result = await adAdsCollection.insertOne(filter);
+      const result = await adsAccountCollection.insertOne(filter);
       res.send(result);
     });
 
-    app.get("/adAds", async (req, res) => {
-      const result = await adAdsCollection.find().toArray();
+    app.get("/adsAccount", async (req, res) => {
+      const result = await adsAccountCollection.find().toArray();
       res.send(result);
     });
 
-    app.get("/adAds", async (req, res) => {
+    app.get("/adsAccount", async (req, res) => {
       const email = req.query.email;
-      const query = { email: email };
-      const result = await adAdsCollection.find(query).toArray();
+      const query = { employeeEmail: email };
+      const result = await adsAccountCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.get("/adAds/:email", async (req, res) => {
+    app.get("/adsAccount/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { employeeEmail: email };
+      const result = await adsAccountCollection.findOne(filter);
+      res.send(result);
+    });
+
+    ///////////////////////////////////////////////////////////////////
+    //                       Mpayment
+    ////////////////////////////////////////////////////////////////////
+    app.post("/Mpayment", async (req, res) => {
+      const filter = req.body;
+      const result = await MpaymentCollection.insertOne(filter);
+      res.send(result);
+    });
+
+    app.get("/Mpayment", async (req, res) => {
+      const result = await MpaymentCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/Mpayment/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
-      const result = await adAdsCollection.findOne(filter);
+      const result = await MpaymentCollection.findOne(filter);
       res.send(result);
     });
 
-    app.get("/adAds/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await adAdsCollection.findOne(filter);
-      res.send(result);
-    });
-
-    // app.get('/clients/:email',async(req,res)=>{
-    //   const email  =req.params.email
-    //   const filter={ email:email }
-    //     const result=await clietCollection.findOne(filter)
-    //     res.send(result)
-    // })
+   
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
