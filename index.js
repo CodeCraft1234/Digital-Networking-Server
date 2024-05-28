@@ -25,41 +25,41 @@ async function run() {
 
     const usersInfocollection = client
       .db("Digital-Networking")
-      .collection("usersInfo");
+      .collection("usersInfoo");
     const campaignCollection = client
       .db("Digital-Networking")
-      .collection("campaigns");
+      .collection("campaignss");
     const businessTraCollection = client
       .db("Digital-Networking")
-      .collection("business-transactions-info");
+      .collection("business-transactions-infoo");
     const allEmployeeCollection = client
       .db("Digital-Networking")
-      .collection("business-transactions-info");
+      .collection("business-transactions-infoo");
     const adAccountCollection = client
       .db("Digital-Networking")
-      .collection("ads");
+      .collection("adss");
     const salaryCollection = client
       .db("Digital-Networking")
-      .collection("salary");
+      .collection("salaryy");
     const userAdCollection = client
       .db("Digital-Networking")
-      .collection("userad");
+      .collection("useradd");
     const workListCollection = client
       .db("Digital-Networking")
-      .collection("works");
+      .collection("workss");
     const OwnSelaryCollection = client
       .db("Digital-Networking")
-      .collection("OwnSelaryCollection");
+      .collection("OwnSelaryCollectionn");
 
     const clietCollection = client
       .db("Digital-Networking")
-      .collection("client");
+      .collection("clientt");
     const adsAccountCollection = client
       .db("Digital-Networking")
-      .collection("adsAccount");
+      .collection("adsAccountt");
     const MpaymentCollection = client
       .db("Digital-Networking")
-      .collection("Mpayment");
+      .collection("Mpaymentt");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -70,10 +70,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users", async (req, res) => {
+      const result = await usersInfocollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
-
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
@@ -377,14 +381,14 @@ async function run() {
 
     app.get("/clients", async (req, res) => {
       const email = req.query.email;
-      const query = { email: email };
+      const query = { employeeEmail: email };
       const result = await clietCollection.find(query).toArray();
       res.send(result);
     });
 
     app.get("/clients/:email", async (req, res) => {
       const email = req.params.email;
-      const filter = { email: email };
+      const filter = { employeeEmail: email };
       const result = await clietCollection.findOne(filter);
       res.send(result);
     });
@@ -480,9 +484,8 @@ async function run() {
     // await client.close();
   }
 }
+console.log('mongodb connected')
 run().catch(console.dir);
-
-console.log();
 app.get("/", (req, res) => {
   res.send("hello canteen");
 });
