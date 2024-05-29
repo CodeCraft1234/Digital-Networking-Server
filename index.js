@@ -135,26 +135,38 @@ async function run() {
       }
     });
 
-    app.put("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { email: new ObjectId(id) };
-      const body = req.body;
-      const updatedoc = {
-        $set: {
-          bkashMarcent: body.bkashMarcent,
-          bkashPersonal: body.bkashPersonal,
-          nagadPersonal: body.nagadPersonal,
-          rocketPersonal: body.rocketPersonal,
-        },
-      };
-      try {
-        const result = await usersInfocollection.updateOne(filter, updatedoc);
-        res.send(result);
-      } catch (error) {
-        console.error(error);
-        res.status(500).send("Error updating user");
-      }
-    });
+    // app.patch("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const filter = { email: email };
+    //   const body = req.body;
+    
+    //   // Log the received body
+    //   console.log("Received body:", body);
+    
+    //   const updateDoc = {
+    //     $set: {
+    //       ...(body.bkashMarcent !== undefined && { bkashMarcent: body.bkashMarcent }),
+    //       ...(body.bkashPersonal !== undefined && { bkashPersonal: body.bkashPersonal }),
+    //       ...(body.nagadPersonal !== undefined && { nagadPersonal: body.nagadPersonal }),
+    //       ...(body.rocketPersonal !== undefined && { rocketPersonal: body.rocketPersonal }),
+    //     },
+    //   };
+    
+    //   console.log("UpdateDoc:", updateDoc); // Log the update document
+    
+    //   try {
+    //     const result = await usersInfocollection.updateOne(filter, updateDoc);
+    //     console.log("Update result:", result);
+    //     if (result.modifiedCount === 0) {
+    //       res.status(404).send("No user found with the provided email");
+    //     } else {
+    //       res.send(result);
+    //     }
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).send("Error updating user");
+    //   }
+    // });
 
     ///////////////////////////////////////////////////////////////////
     //                         campaign
@@ -454,6 +466,23 @@ async function run() {
       const email = req.params.email;
       const filter = { employeeEmail: email };
       const result = await adsAccountCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.patch("/adsAccount/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          currentBallence: body.currentBallence,
+          threshold: body.threshold,
+          totalSpent: body.totalSpent,
+          status:body.status
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
       res.send(result);
     });
 
