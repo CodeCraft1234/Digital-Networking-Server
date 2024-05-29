@@ -469,6 +469,23 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/adsAccount/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          currentBallence: body.currentBallence,
+          threshold: body.threshold,
+          totalSpent: body.totalSpent,
+          status:body.status
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
     ///////////////////////////////////////////////////////////////////
     //                       Mpayment
     ////////////////////////////////////////////////////////////////////
