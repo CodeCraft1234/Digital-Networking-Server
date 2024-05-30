@@ -40,7 +40,7 @@ async function run() {
       .collection("adss");
     const salaryCollection = client
       .db("Digital-Networking")
-      .collection("salaryy");
+      .collection("salary");
     const userAdCollection = client
       .db("Digital-Networking")
       .collection("useradd");
@@ -49,7 +49,7 @@ async function run() {
       .collection("workss");
     const OwnSelaryCollection = client
       .db("Digital-Networking")
-      .collection("OwnSelaryCollectionn");
+      .collection("OwnSelaryCollection");
 
     const clietCollection = client
       .db("Digital-Networking")
