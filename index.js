@@ -468,10 +468,12 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
+          
           currentBallence: body.currentBallence,
           threshold: body.threshold,
+          accountName: body.accountName,
           totalSpent: body.totalSpent,
-          status:body.status
+          status:body.status,
         },
       };
 
