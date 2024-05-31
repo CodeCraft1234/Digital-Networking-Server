@@ -53,7 +53,7 @@ async function run() {
 
     const clietCollection = client
       .db("Digital-Networking")
-      .collection("clientt");
+      .collection("clienttt");
     const adsAccountCollection = client
       .db("Digital-Networking")
       .collection("adsAccountt");
@@ -135,38 +135,7 @@ async function run() {
       }
     });
 
-    // app.patch("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const filter = { email: email };
-    //   const body = req.body;
     
-    //   // Log the received body
-    //   console.log("Received body:", body);
-    
-    //   const updateDoc = {
-    //     $set: {
-    //       ...(body.bkashMarcent !== undefined && { bkashMarcent: body.bkashMarcent }),
-    //       ...(body.bkashPersonal !== undefined && { bkashPersonal: body.bkashPersonal }),
-    //       ...(body.nagadPersonal !== undefined && { nagadPersonal: body.nagadPersonal }),
-    //       ...(body.rocketPersonal !== undefined && { rocketPersonal: body.rocketPersonal }),
-    //     },
-    //   };
-    
-    //   console.log("UpdateDoc:", updateDoc); // Log the update document
-    
-    //   try {
-    //     const result = await usersInfocollection.updateOne(filter, updateDoc);
-    //     console.log("Update result:", result);
-    //     if (result.modifiedCount === 0) {
-    //       res.status(404).send("No user found with the provided email");
-    //     } else {
-    //       res.send(result);
-    //     }
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).send("Error updating user");
-    //   }
-    // });
 
     ///////////////////////////////////////////////////////////////////
     //                         campaign
@@ -438,6 +407,30 @@ async function run() {
           res.status(500).send({ error: 'An error occurred while updating the client' });
       }
   });
+
+  app.patch("/clients/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+  
+      console.log('Received body:', body);
+  
+      const updateDoc = {
+        $set: {
+          clientName: body.clientName,
+          clientPhone: body.clientPhone,
+        },
+      };
+  
+      const result = await clientCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    } catch (error) {
+      console.error("Error updating client:", error);
+      res.status(500).send({ message: "Failed to update client", error });
+    }
+  });
+  
     
 
     ////////////////////////////////////////////////////////
