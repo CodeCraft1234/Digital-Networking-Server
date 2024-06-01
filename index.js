@@ -172,6 +172,13 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/campaigns/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await campaignCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     app.patch("/campaings/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -351,11 +358,6 @@ async function run() {
 
     app.post("/clients", async (req, res) => {
       const filter = req.body;
-      const query = { email: filter?.email };
-      const existingUser = await clietCollection.findOne(query);
-      if (existingUser) {
-        return res.send({ message: "client already exists" });
-      }
       const result = await clietCollection.insertOne(filter);
       res.send(result);
     });
@@ -384,6 +386,13 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await clietCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.delete("/clients/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await clietCollection.deleteOne(filter);
       res.send(result);
     });
 
