@@ -31,13 +31,13 @@ async function run() {
       .collection("campaignss");
     const businessTraCollection = client
       .db("Digital-Networking")
-      .collection("business-transactions-infoo");
+      .collection("business-transactions-info");
     const allEmployeeCollection = client
       .db("Digital-Networking")
-      .collection("business-transactions-infoo");
+      .collection("business-transactions-info");
     const adAccountCollection = client
       .db("Digital-Networking")
-      .collection("adss");
+      .collection("ads");
     const salaryCollection = client
       .db("Digital-Networking")
       .collection("salary");
@@ -351,9 +351,15 @@ async function run() {
 
     app.post("/clients", async (req, res) => {
       const filter = req.body;
+      const query = { email: filter?.email };
+      const existingUser = await clietCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "client already exists" });
+      }
       const result = await clietCollection.insertOne(filter);
       res.send(result);
     });
+    
 
     app.get("/clients", async (req, res) => {
       const result = await clietCollection.find().toArray();
@@ -468,10 +474,8 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
-          
           currentBallence: body.currentBallence,
           threshold: body.threshold,
-          accountName: body.accountName,
           totalSpent: body.totalSpent,
           status:body.status,
         },
