@@ -123,6 +123,11 @@ async function run() {
           fullAddress: body.fullAddress,
           contctNumber: body.contctNumber,
           facebookID: body.facebookID,
+          instagramID: body.instagramID,
+          linkedinID: body.linkedinID,
+          twitterID: body.twitterID,
+          youtubeID: body.youtubeID,
+          whatsappID: body.whatsappID,
           bkashPersonal: body.bkashPersonal,
         },
       };
