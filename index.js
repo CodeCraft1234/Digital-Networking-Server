@@ -112,6 +112,14 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersInfocollection.deleteOne(filter);
+      res.send(result);
+    });
+
+
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
