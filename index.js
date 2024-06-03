@@ -60,6 +60,9 @@ async function run() {
     const MpaymentCollection = client
       .db("Digital-Networking")
       .collection("Mpaymentt");
+    const employeePaymentCollection = client
+      .db("Digital-Networking")
+      .collection("employeePayment");
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -112,6 +115,14 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersInfocollection.deleteOne(filter);
+      res.send(result);
+    });
+
+
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
@@ -123,6 +134,11 @@ async function run() {
           fullAddress: body.fullAddress,
           contctNumber: body.contctNumber,
           facebookID: body.facebookID,
+          instagramID: body.instagramID,
+          linkedinID: body.linkedinID,
+          twitterID: body.twitterID,
+          youtubeID: body.youtubeID,
+          whatsappID: body.whatsappID,
           bkashPersonal: body.bkashPersonal,
         },
       };
@@ -445,6 +461,41 @@ async function run() {
     }
   });
   
+  /////////////////////////////////////////////////
+  // employee payment ////////////////////
+
+  app.post("/employeePayment", async (req, res) => {
+    const filter = req.body;
+    const result = await employeePaymentCollection.insertOne(filter);
+    res.send(result);
+  });
+  
+
+  app.get("/employeePayment", async (req, res) => {
+    const result = await employeePaymentCollection.find().toArray();
+    res.send(result);
+  });
+
+  app.get("/employeePayment", async (req, res) => {
+    const email = req.query.email;
+    const query = { employeeEmail: email };
+    const result = await employeePaymentCollection.find(query).toArray();
+    res.send(result);
+  });
+
+  app.get("/employeePayment/:email", async (req, res) => {
+    const email = req.params.email;
+    const filter = { employeeEmail: email };
+    const result = await employeePaymentCollection.findOne(filter);
+    res.send(result);
+  });
+
+  app.get("/employeePayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await employeePaymentCollection.findOne(filter);
+    res.send(result);
+  });
     
 
     ////////////////////////////////////////////////////////
