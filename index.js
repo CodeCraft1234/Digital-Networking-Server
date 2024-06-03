@@ -185,6 +185,7 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
+          tBudged: body.tBudged,
           status: body.status,
           tSpent: body.tSpent,
           dollerRate: body.dollerRate,
@@ -428,13 +429,11 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const body = req.body;
-  
       console.log('Received body:', body);
-  
       const updateDoc = {
         $set: {
           clientName: body.clientName,
-          clientPhone: body.clientPhone,
+          clientPhone: body.clientPhone,  
         },
       };
   
@@ -483,10 +482,12 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
+          paymentDate: body.paymentDate,
+          accountName: body.accountName,
           currentBallence: body.currentBallence,
           threshold: body.threshold,
           totalSpent: body.totalSpent,
-          status:body.status,
+          status: body.status,
         },
       };
 
@@ -514,6 +515,24 @@ async function run() {
       const result = await MpaymentCollection.findOne(filter);
       res.send(result);
     });
+
+    app.patch("/Mpayment/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          amount: body.amount,
+          date: body.date,
+          note: body.note,
+          status:body.status,
+        },
+      };
+
+      const result = await MpaymentCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
 
    
   } finally {
