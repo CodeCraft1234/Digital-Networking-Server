@@ -496,6 +496,30 @@ async function run() {
     const result = await employeePaymentCollection.findOne(filter);
     res.send(result);
   });
+
+  app.delete("/employeePayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await employeePaymentCollection.deleteOne(filter);
+    res.send(result);
+  });
+
+  app.patch("/employeePayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        payAmount: body.payAmount,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
     
 
     ////////////////////////////////////////////////////////
@@ -524,6 +548,12 @@ async function run() {
       const email = req.params.email;
       const filter = { employeeEmail: email };
       const result = await adsAccountCollection.findOne(filter);
+      res.send(result);
+    });
+    app.delete("/adsAccount/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await adsAccountCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -576,7 +606,7 @@ async function run() {
           amount: body.amount,
           date: body.date,
           note: body.note,
-          status:body.status,
+          paymentMethod: body.method,
         },
       };
 
