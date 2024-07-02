@@ -611,6 +611,48 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/adsAccount/currentBalance/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          currentBallence: body.currentBallence,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+    app.put("/adsAccount/threshold/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          threshold: body.threshold,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+    app.put("/adsAccount/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+     
+
     ///////////////////////////////////////////////////////////////////
     //                       Mpayment
     ////////////////////////////////////////////////////////////////////
