@@ -611,6 +611,19 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/adsAccount/currentBalance/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          currentBallence: body.currentBallence,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
     ///////////////////////////////////////////////////////////////////
     //                       Mpayment
     ////////////////////////////////////////////////////////////////////
