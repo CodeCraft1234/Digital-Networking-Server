@@ -64,6 +64,10 @@ async function run() {
       .db("Digital-Networking")
       .collection("employeePayment");
 
+
+      const allLogoCollection = client.db("Digital-Networking").collection("logoInfoo");
+      const allLinksCollection = client.db("Digital-Networking").collection("linkInfoo");
+
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
     ///////////////////////////////////////////////////////////////////////////
@@ -369,6 +373,38 @@ async function run() {
       res.send(result);
     });
 
+    ///////////////////////////////////////////////////////////////////////////
+    //                         links social data
+    ///////////////////////////////////////////////////////////////////////////
+
+    app.get("/links", async (req, res) => {
+      const result = await allLinksCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/links", async (req, res) => {
+      const user = req.body;
+      const result = await allLinksCollection.insertOne(user);
+      res.send(result);
+    });
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                         logo social data
+    ///////////////////////////////////////////////////////////////////////////
+
+    app.get("/logos", async (req, res) => {
+      const result = await allLogoCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/logos", async (req, res) => {
+      const user = req.body;
+      const result = await allLogoCollection.insertOne(user);
+      res.send(result);
+    });
+
+
     ////////////////////////////////////////////////////////
     //                 client
     ////////////////////////////////////////////////////////
@@ -564,7 +600,6 @@ async function run() {
       const updatenew = {
         $set: {
           paymentDate: body.paymentDate,
-          accountName: body.accountName,
           currentBallence: body.currentBallence,
           threshold: body.threshold,
           totalSpent: body.totalSpent,
