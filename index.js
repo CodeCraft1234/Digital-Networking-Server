@@ -216,6 +216,34 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/campaings/totalBudged/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalBudged: body.totalBudged,
+        },
+      };
+
+      const result = await campaignCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.put("/campaings/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await campaignCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
     ///////////////////////////// ad account table ////////////////////
     app.post("/ads", async (req, res) => {
       const filter = req.body;
