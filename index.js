@@ -222,7 +222,7 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
-          totalBudged: body.totalBudged,
+          tBudged: body.tBudged,
         },
       };
 
@@ -236,7 +236,7 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
-          totalSpent: body.totalSpent,
+          tSpent: body.tSpent,
         },
       };
 
