@@ -216,6 +216,34 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/campaings/totalBudged/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalBudged: body.totalBudged,
+        },
+      };
+
+      const result = await campaignCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.put("/campaings/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await campaignCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
     ///////////////////////////// ad account table ////////////////////
     app.post("/ads", async (req, res) => {
       const filter = req.body;
@@ -320,9 +348,10 @@ async function run() {
 
       const updatenew = {
         $set: {
+          accountName: body.accountName,
           date: body.date,
           threshold: body.threshold,
-          currentBalance: body.currentBalance,
+          currentBallence: body.currentBallence,
           totalSpent: body.totalSpent,
           status: body.status,
         },
@@ -599,9 +628,10 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
-          paymentDate: body.paymentDate,
-          currentBallence: body.currentBallence,
+          accountName: body.accountName,
+          date: body.date,
           threshold: body.threshold,
+          currentBallence: body.currentBallence,
           totalSpent: body.totalSpent,
           status: body.status,
         },
@@ -624,6 +654,35 @@ async function run() {
       const result = await adsAccountCollection.updateOne(filter, updatenew);
       res.send(result);
     });
+    app.put("/adsAccount/threshold/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          threshold: body.threshold,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+    app.put("/adsAccount/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+     
+
     ///////////////////////////////////////////////////////////////////
     //                       Mpayment
     ////////////////////////////////////////////////////////////////////
@@ -662,6 +721,12 @@ async function run() {
       res.send(result);
     });
 
+    app.delete("/Mpayment/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await MpaymentCollection.deleteOne(filter);
+      res.send(result);
+    });
 
    
   } finally {
