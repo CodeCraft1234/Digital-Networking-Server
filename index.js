@@ -26,27 +26,35 @@ async function run() {
     const usersInfocollection = client
       .db("Digital-Networking")
       .collection("usersInfoo");
+
     const campaignCollection = client
       .db("Digital-Networking")
       .collection("campaignss");
+
     const businessTraCollection = client
       .db("Digital-Networking")
       .collection("business-transactions-info");
+
     const allEmployeeCollection = client
       .db("Digital-Networking")
       .collection("business-transactions-info");
+
     const adAccountCollection = client
       .db("Digital-Networking")
       .collection("ads");
+
     const salaryCollection = client
       .db("Digital-Networking")
       .collection("salary");
+
     const userAdCollection = client
       .db("Digital-Networking")
       .collection("useradd");
+
     const workListCollection = client
       .db("Digital-Networking")
       .collection("workss");
+
     const OwnSelaryCollection = client
       .db("Digital-Networking")
       .collection("OwnSelaryCollection");
@@ -54,16 +62,28 @@ async function run() {
     const clietCollection = client
       .db("Digital-Networking")
       .collection("clienttt");
+
     const adsAccountCollection = client
       .db("Digital-Networking")
       .collection("adsAccountt");
+
+    const adsAccountCenterCollection = client
+      .db("Digital-Networking")
+      .collection("adsAccountCenter");
+    const monthlySpentCollection = client
+      .db("Digital-Networking")
+      .collection("monthlySpent");
+
     const MpaymentCollection = client
       .db("Digital-Networking")
       .collection("Mpaymentt");
+
     const employeePaymentCollection = client
       .db("Digital-Networking")
       .collection("employeePayment");
-
+    const adsPaymentCollection = client
+      .db("Digital-Networking")
+      .collection("adsPayment");
 
       const allLogoCollection = client.db("Digital-Networking").collection("logoInfoo");
       const allLinksCollection = client.db("Digital-Networking").collection("linkInfoo");
@@ -107,6 +127,136 @@ async function run() {
       const result = await usersInfocollection.insertOne(user);
       res.send(result);
     });
+
+
+    app.post("/users/update", async (req, res) => {
+      const { email, monthlySpent } = req.body;
+    
+      try {
+        // Check if the user already exists
+        const query = { email };
+        const existingUser = await usersInfocollection.findOne(query);
+    
+        if (existingUser) {
+          // Update the existing user with monthlySpent data
+          await usersInfocollection.updateOne(query, {
+            $push: {
+              monthlySpent: {
+                $each: [monthlySpent],
+                $position: 0 // Optional: Adjust position in the array if needed
+              }
+            }
+          });
+          res.send({ message: "User updated with monthlySpent data successfully" });
+        } else {
+          // Insert new user if not exists
+          const newUser = {
+            email,
+            monthlySpent: [monthlySpent],
+            // Add other default fields as necessary
+          };
+          await usersInfocollection.insertOne(newUser);
+          res.send({ message: "User created with monthlySpent data successfully" });
+        }
+      } catch (error) {
+        console.error("Error updating or inserting user:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
+    });
+    
+
+    app.post("/users/updateSellery", async (req, res) => {
+      const { email, selleryData } = req.body;
+  
+      try {
+          // Check if the user already exists
+          const query = { email };
+          const existingUser = await usersInfocollection.findOne(query);
+  
+          if (existingUser) {
+              // Update the existing user with sellery data
+              await usersInfocollection.updateOne(query, {
+                  $push: {
+                      sellery: {
+                          $each: [selleryData],
+                          $position: 0 // Optional: Adjust position in the array if needed
+                      }
+                  }
+              });
+              res.send({ message: "User updated with sellery data successfully" });
+          } else {
+              // Insert new user if not exists
+              const newUser = {
+                  email,
+                  sellery: [selleryData],
+                  // Add other default fields as necessary
+              };
+              await usersInfocollection.insertOne(newUser);
+              res.send({ message: "User created with sellery data successfully" });
+          }
+      } catch (error) {
+          console.error("Error updating or inserting user:", error);
+          res.status(500).send({ message: "Internal server error" });
+      }
+  });
+
+    app.post("/users/adminPay", async (req, res) => {
+      const { email, adminPay } = req.body;
+  
+      try {
+          // Check if the user already exists
+          const query = { email };
+          const existingUser = await usersInfocollection.findOne(query);
+  
+          if (existingUser) {
+              // Update the existing user with sellery data
+              await usersInfocollection.updateOne(query, {
+                  $push: {
+                    adminPay: {
+                          $each: [adminPay],
+                          $position: 0 // Optional: Adjust position in the array if needed
+                      }
+                  }
+              });
+              res.send({ message: "User updated with sellery data successfully" });
+          } else {
+              // Insert new user if not exists
+              const newUser = {
+                  email,
+                  sellery: [adminPay],
+                  // Add other default fields as necessary
+              };
+              await usersInfocollection.insertOne(newUser);
+              res.send({ message: "User created with sellery data successfully" });
+          }
+      } catch (error) {
+          console.error("Error updating or inserting user:", error);
+          res.status(500).send({ message: "Internal server error" });
+      }
+  });
+  
+
+  app.put('/updateSpent/:userId/:spentId', async (req, res) => {
+    const { userId, spentId } = req.params;
+    const { totalSpentt } = req.body;
+  
+    try {
+      // Update the specific user's monthlySpent entry
+      const result = await usersInfocollection.updateOne(
+        { _id: new ObjectId(userId), "monthlySpent.ids": parseInt(spentId) },
+        { $set: { "monthlySpent.$.totalSpentt": totalSpentt } }
+      );
+  
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ message: 'User or spent entry not found' });
+      }
+  
+      res.status(200).json({ message: 'Total spent updated successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
@@ -154,6 +304,67 @@ async function run() {
         res.status(500).send("Error updating user");
       }
     });
+
+    app.put("/users/payoneer/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+    
+      const updateDocument = {
+        $set: {
+          payoneer: body.payoneer
+        },
+      };
+      
+      try {
+        const result = await usersInfocollection.updateOne(filter, updateDocument);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).send({ error: "Failed to update user"});
+      }
+    });
+
+
+    app.put("/users/:field/:id", async (req, res) => {
+      const id = req.params.id;
+      const field = req.params.field;
+      const body = req.body;
+    
+      if (!body[field]) {
+        return res.status(400).send({ error: "Field value missing in request body" });
+      }
+    
+      const filter = { _id: new ObjectId(id) };
+      const updateDocument = {
+        $set: {
+          [field]: body[field]
+        }
+      };
+    
+      try {
+        const result = await usersInfocollection.updateOne(filter, updateDocument);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).send({ error: "Failed to update user" });
+      }
+    });
+
+    app.put("/users/role/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+    
+      const filter = { _id: new ObjectId(id) };
+      const updateDocument = {
+        $set: {
+          role: body.role
+        }
+      };
+        const result = await usersInfocollection.updateOne(filter, updateDocument);
+        res.send(result);
+    });
+    
 
     
 
@@ -225,7 +436,6 @@ async function run() {
           tBudged: body.tBudged,
         },
       };
-
       const result = await campaignCollection.updateOne(filter, updatenew);
       res.send(result);
     });
@@ -239,7 +449,6 @@ async function run() {
           tSpent: body.tSpent,
         },
       };
-
       const result = await campaignCollection.updateOne(filter, updatenew);
       res.send(result);
     });
@@ -275,23 +484,23 @@ async function run() {
     });
 
     ////////////////// employee salary table ////////////////////
-    app.post("/salary", async (req, res) => {
+    app.post("/sellery", async (req, res) => {
       const filter = req.body;
       const result = await salaryCollection.insertOne(filter);
       res.send(result);
     });
-    app.get("/salary", async (req, res) => {
+    app.get("/sellery", async (req, res) => {
       const result = await salaryCollection.find().toArray();
       res.send(result);
     });
 
-    app.get("/salary/:id", async (req, res) => {
+    app.get("/sellery/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { id: id };
       const result = await salaryCollection.find(filter).toArray();
       res.send(result);
     });
-    app.get("/salary/:id", async (req, res) => {
+    app.get("/sellery/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await salaryCollection.findOne(filter);
@@ -315,6 +524,72 @@ async function run() {
       const result = await salaryCollection.updateOne(filter, updatenew);
       res.send(result);
     });
+
+
+    ////////////////// monthlySpent ////////////////////
+    app.post("/monthlySpent", async (req, res) => {
+      const filter = req.body;
+      const result = await monthlySpentCollection.insertOne(filter);
+      res.send(result);
+    });
+    app.get("/monthlySpent", async (req, res) => {
+      const result = await monthlySpentCollection.find().toArray();
+      res.send(result);
+    });
+
+
+    app.get("/monthlySpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await monthlySpentCollection.findOne(filter);
+      res.send(result);
+    });
+
+
+    app.patch("/monthlySpent/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      console.log(body);
+
+      const updateDoc = {
+        $set: {
+          totalSpentt: body.totalSpentt,
+        },
+      };
+  
+      const result = await monthlySpentCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.delete("/monthlySpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await monthlySpentCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    ////////////////// monthlySpent sellery ////////////////////
+
+    app.post("/selleryPay", async (req, res) => {
+      const filter = req.body;
+      const result = await monthlySpentCollection.insertOne(filter);
+      res.send(result);
+    });
+    
+    app.get("/selleryPay", async (req, res) => {
+      const result = await monthlySpentCollection.find().toArray();
+      res.send(result);
+    });
+
+
+    app.get("/selleryPay/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await monthlySpentCollection.findOne(filter);
+      res.send(result);
+    });
+
 
     /////////// user ad account activities table ////////////////////
     app.post("/userad", async (req, res) => {
@@ -359,6 +634,7 @@ async function run() {
       const result = await userAdCollection.updateOne(filter, updatenew);
       res.send(result);
     });
+
 
     /////////// own work list table ////////////////////
     app.post("/works", async (req, res) => {
@@ -518,16 +794,39 @@ async function run() {
         },
       };
   
-      const result = await clientCollection.updateOne(filter, updateDoc);
+      const result = await clietCollection.updateOne(filter, updateDoc);
       res.send(result);
     } catch (error) {
       console.error("Error updating client:", error);
       res.status(500).send({ message: "Failed to update client", error });
     }
   });
+  app.delete("/clients/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await clietCollection.deleteOne(filter);
+    res.send(result);
+  });
+
+  app.patch("/client/update/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        clientEmail: body.clientEmail,
+        clientName: body.clientName,
+        clientPhone: body.clientPhone,
+      },
+    };
+
+    const result = await clietCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
   
   /////////////////////////////////////////////////
   // employee payment ////////////////////
+  ////////////////////////////////////
 
   app.post("/employeePayment", async (req, res) => {
     const filter = req.body;
@@ -585,8 +884,81 @@ async function run() {
     const result = await employeePaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
-    
 
+  /////////////////////////////////////////////////
+  // ads payment ////////////////////
+  ////////////////////////////////////
+
+  app.post("/adsPayment", async (req, res) => {
+    const filter = req.body;
+    const result = await adsPaymentCollection.insertOne(filter);
+    res.send(result);
+  });
+  
+
+  app.get("/adsPayment", async (req, res) => {
+    const result = await adsPaymentCollection.find().toArray();
+    res.send(result);
+  });
+
+  app.get("/adsPayment", async (req, res) => {
+    const email = req.query.email;
+    const query = { employeeEmail: email };
+    const result = await adsPaymentCollection.find(query).toArray();
+    res.send(result);
+  });
+
+  app.get("/adsPayment/:email", async (req, res) => {
+    const email = req.params.email;
+    const filter = { employeeEmail: email };
+    const result = await adsPaymentCollection.findOne(filter);
+    res.send(result);
+  });
+
+  app.get("/adsPayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await adsPaymentCollection.findOne(filter);
+    res.send(result);
+  });
+
+  app.delete("/adsPayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await adsPaymentCollection.deleteOne(filter);
+    res.send(result);
+  });
+
+  app.patch("/adsPayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        payAmount: body.payAmount,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+    
+////////////////////////logo////////////////////////////
+app.get("/logos", async (req, res) => {
+  const result = await allLogoCollection.find().toArray();
+  res.send(result);
+});
+
+app.get("/logos/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+
+  const result = await allLogoCollection.findOne(filter);
+  res.send(result);
+});
     ////////////////////////////////////////////////////////
     //                 ads ad account
     ////////////////////////////////////////////////////////
@@ -629,10 +1001,10 @@ async function run() {
       const updatenew = {
         $set: {
           accountName: body.accountName,
-          date: body.date,
+          date:body.date,
+          paymentDate: body.paymentDate,
           threshold: body.threshold,
           currentBallence: body.currentBallence,
-          totalSpent: body.totalSpent,
           status: body.status,
         },
       };
@@ -681,6 +1053,101 @@ async function run() {
       res.send(result);
     });
 
+    ////////////////////////////////////////////////////////
+    //                 ads ad account center
+    ////////////////////////////////////////////////////////
+
+    app.post("/adsAccountCenter", async (req, res) => {
+      const filter = req.body;
+      const result = await adsAccountCenterCollection.insertOne(filter);
+      res.send(result);
+    });
+
+    app.get("/adsAccountCenter", async (req, res) => {
+      const result = await adsAccountCenterCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/adsAccountCenter", async (req, res) => {
+      const email = req.query.email;
+      const query = { employeeEmail: email };
+      const result = await adsAccountCenterCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/adsAccountCenter/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { employeeEmail: email };
+      const result = await adsAccountCenterCollection.findOne(filter);
+      res.send(result);
+    });
+    app.delete("/adsAccountCenter/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await adsAccountCenterCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    app.patch("/adsAccountCenter/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          accountName: body.accountName,
+          paymentDate: body.paymentDate,
+          threshold: body.threshold,
+          currentBallence: body.currentBallence,
+          totalSpent: body.totalSpent,
+          dollerRate: body.dollerRate,
+          status: body.status,
+        },
+      };
+
+      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.put("/adsAccountCenter/currentBalance/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          currentBallence: body.currentBallence,
+        },
+      };
+
+      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+    app.put("/adsAccountCenter/threshold/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          threshold: body.threshold,
+        },
+      };
+
+      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+    app.put("/adsAccountCenter/totalSpent/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
      
 
     ///////////////////////////////////////////////////////////////////
@@ -713,7 +1180,7 @@ async function run() {
           amount: body.amount,
           date: body.date,
           note: body.note,
-          paymentMethod: body.method,
+          paymentMethod: body.paymentMethod,
         },
       };
 
