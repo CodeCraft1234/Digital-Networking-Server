@@ -27,17 +27,17 @@ async function run() {
       .db("Digital-Networking")
       .collection("usersInfoo");
 
+    const notificationcollection = client
+      .db("Digital-Networking")
+      .collection("notificationInfo");
+
+    const bankInfocollection = client
+      .db("Digital-Networking")
+      .collection("bankInfoo");
+
     const campaignCollection = client
       .db("Digital-Networking")
       .collection("campaignss");
-
-    const businessTraCollection = client
-      .db("Digital-Networking")
-      .collection("business-transactions-info");
-
-    const allEmployeeCollection = client
-      .db("Digital-Networking")
-      .collection("business-transactions-info");
 
     const adAccountCollection = client
       .db("Digital-Networking")
@@ -258,6 +258,56 @@ async function run() {
     }
   });
 
+  app.put('/updateSpentt/:userId/:spentId', async (req, res) => {
+    const { userId, spentId } = req.params;
+    const { totalSpentt, dollerRate } = req.body;  // Access directly from req.body
+
+    try {
+        // Update the specific user's monthlySpent entry
+        const result = await usersInfocollection.updateOne(
+            { _id: new ObjectId(userId), "monthlySpent.ids": parseInt(spentId) },
+            { 
+                $set: { 
+                    "monthlySpent.$.totalSpentt": totalSpentt,  // Update totalSpentt
+                    "monthlySpent.$.dollerRate": dollerRate     // Update dollerRate
+                }
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'User or spent entry not found' });
+        }
+
+        res.status(200).json({ message: 'Total spent updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+
+  app.delete('/users/historyDelete/:userId/:ids', async (req, res) => {
+    const { userId, ids } = req.params;
+  
+    try {
+      // Use the $pull operator to remove the entry from the monthlySpent array by ids
+      const result = await usersInfocollection.updateOne(
+        { _id: new ObjectId(userId) },
+        { $pull: { monthlySpent: { ids: parseInt(ids) } } } // Assuming ids is an integer
+      );
+  
+      if (result.modifiedCount === 0) {
+        return res.status(404).json({ message: 'Entry not found or already deleted' });
+      }
+  
+      res.status(200).json({ message: 'Entry deleted successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       if (req.decoded.email !== email) {
@@ -276,6 +326,8 @@ async function run() {
       res.send(result);
     });
 
+    
+
 
     app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -286,7 +338,7 @@ async function run() {
           fullName: body.fullName,
           companyLogo: body.companyLogo,
           fullAddress: body.fullAddress,
-          contctNumber: body.contctNumber,
+          number: body.number,
           facebookID: body.facebookID,
           instagramID: body.instagramID,
           linkedinID: body.linkedinID,
@@ -365,7 +417,168 @@ async function run() {
         res.send(result);
     });
     
+    app.patch("/users/2/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+    
+      const filter = { _id: new ObjectId(id) };
+      const updateDocument = {
+        $set: {
+          name: body.name,
+          contactNumber: body.contactNumber
+        }
+      };
+        const result = await usersInfocollection.updateOne(filter, updateDocument);
+        res.send(result);
+    });
 
+
+    app.put('/updateSellery/:userId/:spentId', async (req, res) => {
+      const { userId, spentId } = req.params;
+      const { totalSpentt } = req.body;
+    
+      try {
+      
+        const result = await usersInfocollection.updateOne(
+          { _id: new ObjectId(userId), "sellery.id": parseInt(spentId) },
+          { $set: { "sellery.$.amount": totalSpentt } }
+        );
+    
+        if (result.modifiedCount === 0) {
+          return res.status(404).json({ message: 'User or spent entry not found' });
+        }
+    
+        res.status(200).json({ message: 'Total spent updated successfully' });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+      }
+    });
+
+    
+    app.delete('/deleteSellery/:userId/:spentId', async (req, res) => {
+      const { userId, spentId } = req.params;
+    
+      try {
+        
+        const result = await usersInfocollection.updateOne(
+          { _id: new ObjectId(userId) },
+          { $pull: { sellery: { id: parseInt(spentId) } } } 
+        );
+    
+        if (result.modifiedCount === 0) {
+          return res.status(404).json({ message: 'Payment entry not found or already deleted' });
+        }
+    
+        res.status(200).json({ message: 'Payment entry deleted successfully' });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+      }
+    });
+    
+    
+
+        ///////////////////////////////////////////////////////////////////
+    //                         campaign
+    ////////////////////////////////////////////////////////////////////
+    app.post("/notification", async (req, res) => {
+      const filter = req.body;
+      const result = await notificationcollection.insertOne(filter);
+      res.send(result);
+    });
+
+    app.get("/notification/:email", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await notificationcollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/notification", async (req, res) => {
+      const result = await notificationcollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/notification/:id", async (req, res) => {
+      const id = req.params.id;
+    
+      try {
+        // Check if `id` is a valid ObjectId
+        const filter = { _id: new ObjectId(id) };
+        
+        // Construct the update object
+        const updateData = {
+          $set: {
+            status: req.body.status,
+          },
+        };
+        
+        // Perform the update
+        const result = await notificationcollection.updateOne(filter, updateData);
+    
+        if (result.modifiedCount === 1) {
+          res.status(200).send({ message: "Notification updated successfully" });
+        } else {
+          res.status(404).send({ message: "Notification not found or already updated" });
+        }
+      } catch (error) {
+        res.status(500).send({ message: "Error updating notification", error });
+      }
+    });
+    
+        ///////////////////////////////////////////////////////////////////
+    //                         campaign
+    ////////////////////////////////////////////////////////////////////
+    app.post("/bankInfo", async (req, res) => {
+      const filter = req.body;
+      const result = await bankInfocollection.insertOne(filter);
+      res.send(result);
+    });
+
+    app.get("/bankInfo/:id", async (req, res) => {
+      const email = req.params.id;
+      const query = { _id:new ObjectId(email) };
+      const result = await bankInfocollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/bankInfo", async (req, res) => {
+      const result = await bankInfocollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch('/bankInfo/:id', async (req, res) => {
+      const { id } = req.params; // Get the bank info ID from URL parameters
+      const updateData = req.body; // Get the data to be updated from the request body
+    
+      try {
+        // Update the bank info document in the MongoDB collection
+        const result = await bankInfocollection.updateOne(
+          { _id: new ObjectId(id) }, // Convert the string ID to MongoDB ObjectId
+          { $set: updateData } // Set the updated fields
+        );
+    
+        // Check if the document was modified
+        if (result.modifiedCount > 0) {
+          res.status(200).send({ message: 'Bank info updated successfully' });
+        } else {
+          res.status(404).send({ message: 'Bank info not found or not updated' });
+        }
+      } catch (error) {
+        // Handle any errors that occur during the update
+        res.status(500).send({ message: 'Error updating bank info', error });
+      }
+    });
+
+
+       app.delete("/bankInfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await bankInfocollection.deleteOne(filter);
+      res.send(result);
+    });
+    
     
 
     ///////////////////////////////////////////////////////////////////
@@ -416,6 +629,7 @@ async function run() {
       const body = req.body;
       const updatenew = {
         $set: {
+          campaignName: body.campaignName,
           tBudged: body.tBudged,
           status: body.status,
           tSpent: body.tSpent,
@@ -423,6 +637,19 @@ async function run() {
         },
       };
 
+      const result = await campaignCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.patch("/campaings/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          status: body.status,
+        },
+      };
       const result = await campaignCollection.updateOne(filter, updatenew);
       res.send(result);
     });
@@ -715,10 +942,32 @@ async function run() {
     ////////////////////////////////////////////////////////
 
     app.post("/clients", async (req, res) => {
-      const filter = req.body;
-      const result = await clietCollection.insertOne(filter);
+      
+      const { clientEmail, clientPhone, employeeEmail } = req.body;
+      // Check if client with the same email or phone number already exists, and if the employeeEmail matches
+      const existingClient = await clietCollection.findOne({
+        $and: [
+          {
+            $or: [
+              { clientEmail: clientEmail },
+              { clientPhone: clientPhone }
+            ]
+          },
+          { employeeEmail: employeeEmail }
+        ]
+      });
+    
+      if (existingClient) {
+        // If a client with the same email or phone exists, and matches the employeeEmail, send a response indicating duplication
+        return res.status(400).send({ message: "Client with the same email or phone number already exists for this employee." });
+      }
+    
+      // If no duplication, insert the new client data
+      const result = await clietCollection.insertOne(req.body);
       res.send(result);
     });
+    
+    
     
 
     app.get("/clients", async (req, res) => {
@@ -874,6 +1123,7 @@ async function run() {
     const body = req.body;
     const updatenew = {
       $set: {
+        status: body.status,
         payAmount: body.payAmount,
         date: body.date,
         note: body.note,
@@ -881,6 +1131,34 @@ async function run() {
       },
     };
 
+    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/employeePayment/status/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
+    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/employeePayment/status/pending/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
     const result = await employeePaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
@@ -945,7 +1223,35 @@ async function run() {
     const result = await adsPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
-    
+  
+  app.patch("/adsPayment/status/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
+    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/adsPayment/status/pending/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
+    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
 ////////////////////////logo////////////////////////////
 app.get("/logos", async (req, res) => {
   const result = await allLogoCollection.find().toArray();
@@ -1005,7 +1311,6 @@ app.get("/logos/:id", async (req, res) => {
           paymentDate: body.paymentDate,
           threshold: body.threshold,
           currentBallence: body.currentBallence,
-          status: body.status,
         },
       };
 
@@ -1039,6 +1344,7 @@ app.get("/logos/:id", async (req, res) => {
       const result = await adsAccountCollection.updateOne(filter, updatenew);
       res.send(result);
     });
+
     app.put("/adsAccount/totalSpent/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -1046,6 +1352,20 @@ app.get("/logos/:id", async (req, res) => {
       const updatenew = {
         $set: {
           totalSpent: body.totalSpent,
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.patch("/adsAccount/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          status: body.status,
         },
       };
 
@@ -1085,6 +1405,20 @@ app.get("/logos/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await adsAccountCenterCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    app.patch("/adsAccountCenter/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          status: body.status,
+        },
+      };
+
+      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
       res.send(result);
     });
 
