@@ -3,12 +3,11 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
-//MIADLEWERE
 app.use(express.json());
 app.use(cors());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@robiul.13vbdvd.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@anowarulbd.cwgkj.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -20,73 +19,132 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
+    const clientCollection = client.db("Digital-Networking").collection("clients");
+    const bankInfocollection = client.db("Digital-Networking").collection("bankInfo");
+    const adminPaymentCollection = client.db("Digital-Networking").collection("adminPaymentInfo");
+    const salaryPaymentCollection = client.db("Digital-Networking").collection("salaryPaymentInfo");
+    const adsAccountCollection = client.db("Digital-Networking").collection("adsAccountInfo");
+    const BasicSalaryCollection = client.db("Digital-Networking").collection("basicSalaryInfo");
+    
+    const notificationcollection = client.db("Digital-Networking").collection("notificationInfo");
+    const editNotificationcollection = client.db("Digital-Networking").collection("editNotificationInfo");
+    const adsAccountCenterCollection = client.db("Digital-Networking").collection("adsAccountCenter");
+    const monthlySpentCollection = client.db("Digital-Networking").collection("monthlySpent");
+    const ContributorPaymentCollection = client.db("Digital-Networking").collection("ContributorPayment");
+    const activityCollection = client.db("Digital-Networking").collection("activityInfos");
+    const payoneerDataCollection = client.db("Digital-Networking").collection("payoneerDataInfo");
+    const payoneerEmailCollection = client.db("Digital-Networking").collection("payoneerEmailInfo");
 
-    const usersInfocollection = client
-      .db("Digital-Networking")
-      .collection("usersInfoo");
 
-    const notificationcollection = client
-      .db("Digital-Networking")
-      .collection("notificationInfo");
+    ////////////////////////////////////////////////////////
+    //                 ads ad account center
+    ////////////////////////////////////////////////////////
 
-    const bankInfocollection = client
-      .db("Digital-Networking")
-      .collection("bankInfoo");
+  
+    app.get("/basicSalary", async (req, res) => {
+      const result = await BasicSalaryCollection.find().toArray();
+      res.send(result);
+    });
 
-    const campaignCollection = client
-      .db("Digital-Networking")
-      .collection("campaignss");
+    app.post("/basicSalary", async (req, res) => {
+      const { employeeEmail, month } = req.body;
+    
+      // Check if the document already exists
+      const existingRecord = await BasicSalaryCollection.findOne({ employeeEmail, month });
+    
+      if (existingRecord) {
+        // If it exists, update it
+        const updatedRecord = await BasicSalaryCollection.updateOne(
+          { employeeEmail, month },
+          { $set: { payAmount: req.body.payAmount } }
+        );
+        return res.send({ message: "Record updated successfully", updatedRecord });
+      } else {
+        // If it doesn't exist, insert a new one
+        const result = await BasicSalaryCollection.insertOne(req.body);
+        return res.send({ message: "Record inserted successfully", result });
+      }
+    });
+    
 
-    const adAccountCollection = client
-      .db("Digital-Networking")
-      .collection("ads");
 
-    const salaryCollection = client
-      .db("Digital-Networking")
-      .collection("salary");
+    ////////////////////////////////////////////////////////
+    //                 ads ad account center
+    ////////////////////////////////////////////////////////
 
-    const userAdCollection = client
-      .db("Digital-Networking")
-      .collection("useradd");
+    
+    app.post("/payoneerData", async (req, res) => {
+      const filter = req.body;
+      const result = await payoneerDataCollection.insertOne(filter);
+      res.send(result);
+    });
 
-    const workListCollection = client
-      .db("Digital-Networking")
-      .collection("workss");
+    app.get("/payoneerData", async (req, res) => {
+      const result = await payoneerDataCollection.find().toArray();
+      res.send(result);
+    });
 
-    const OwnSelaryCollection = client
-      .db("Digital-Networking")
-      .collection("OwnSelaryCollection");
+    app.patch("/payoneerData/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          status: body.status,
+        },
+      };
+      const result = await payoneerDataCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
 
-    const clietCollection = client
-      .db("Digital-Networking")
-      .collection("clienttt");
+    app.patch("/payoneerData/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      console.log(body);
 
-    const adsAccountCollection = client
-      .db("Digital-Networking")
-      .collection("adsAccountt");
+      const updatenew = {
+        $set: {
+          dollerRate: body.dollerRate,
+          date: body.date,
+          payoneerEmail: body.payoneerEmail,
+          amount: body.amount,
+          note: body.note,
+        },
+      };
+      const result = await payoneerDataCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
 
-    const adsAccountCenterCollection = client
-      .db("Digital-Networking")
-      .collection("adsAccountCenter");
-    const monthlySpentCollection = client
-      .db("Digital-Networking")
-      .collection("monthlySpent");
+    app.delete("/payoneerData/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await payoneerDataCollection.deleteOne(filter);
+      res.send(result);
+    });
+    ////////////////////////////////////////////////////////
+    //                 ads ad account center
+    ////////////////////////////////////////////////////////
 
-    const MpaymentCollection = client
-      .db("Digital-Networking")
-      .collection("Mpaymentt");
+    
+    app.post("/payoneerEmail", async (req, res) => {
+      const filter = req.body;
+      const result = await payoneerEmailCollection.insertOne(filter);
+      res.send(result);
+    });
 
-    const employeePaymentCollection = client
-      .db("Digital-Networking")
-      .collection("employeePayment");
-    const adsPaymentCollection = client
-      .db("Digital-Networking")
-      .collection("adsPayment");
+    app.get("/payoneerEmail", async (req, res) => {
+      const result = await payoneerEmailCollection.find().toArray();
+      res.send(result);
+    });
 
-      const allLogoCollection = client.db("Digital-Networking").collection("logoInfoo");
-      const allLinksCollection = client.db("Digital-Networking").collection("linkInfoo");
+    app.delete("/payoneerEmail/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await payoneerEmailCollection.deleteOne(filter);
+      res.send(result);
+    });
 
     ///////////////////////////////////////////////////////////////////////////
     //                         user data
@@ -97,10 +155,136 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", async (req, res) => {
-      const result = await usersInfocollection.find().toArray();
-      res.send(result);
-    });
+    app.get("/usersSellery/:email", async (req, res) => {
+      try {
+          const email = req.params.email;
+          const filter = email === "all" ? { role: "employee" } : { email }; // Adjust filter for "all"
+  
+          const users = email === "all"
+              ? await usersInfocollection
+                    .find(filter, { projection: { role: 1,name:1,photo:1, email: 1, _id: 1, monthlySpent: 1 } })
+                    .toArray() // Use `.toArray()` for multiple users
+              : await usersInfocollection.findOne(filter, {
+                    projection: { role: 1, email: 1, _id: 1, monthlySpent: 1 },
+                });
+  
+          if (!users || (Array.isArray(users) && users.length === 0)) {
+              return res.status(404).json({ message: "No users found" });
+          }
+  
+          res.status(200).json(users); // Return the data
+      } catch (error) {
+          console.error("Error fetching user data:", error);
+          res.status(500).json({ message: "Internal Server Error" });
+      }
+  });
+  
+    app.get("/allEmployees", async (req, res) => {
+      try {
+          const users = await usersInfocollection.find({}, { projection: {role:1, email: 1, _id: 1, name: 1, photo:1, contactNumber:1 } }).toArray();
+          res.send(users);
+      } catch (error) {
+          console.error("Error fetching ads accounts:", error);
+          res.status(500).send({ message: "Internal Server Error" });
+      }
+  });
+
+//   app.get("/myUser/:email", async (req, res) => {
+//     const email = req.params.email;
+//     const filter = email === "all" ? {} : { email: email };  // If email is "all", return all users
+
+//     try {
+//         const result = await usersInfocollection.find(filter).toArray();
+
+//         // Check if the result is empty and return an appropriate message
+//         if (result.length === 0) {
+//             return res.status(404).send({ message: "No data found" });
+//         }
+
+//         // Modify the data format to return the necessary fields
+//         const modifiedResult = result.map(user => {
+//             // Ensure monthlySpent exists before attempting to map
+//             const monthlySpent = user.monthlySpent || [];
+
+//             return {
+//                 email: user.email,
+//                 role: user.role,
+//                 monthlySpent: monthlySpent.map(spent => ({
+//                     totalSpentt: spent.totalSpentt,
+//                     role: spent.role,
+//                     date: spent.date
+//                 }))
+//             };
+//         });
+
+//         res.send(modifiedResult);  // Send the modified result
+//     } catch (error) {
+//         console.error("Error fetching data:", error);
+//         res.status(500).send({ message: "Error fetching data" });
+//     }
+// });
+
+
+app.get("/myUser/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all" ? {} : { email: email };  // If email is "all", return all users
+
+  try {
+      const result = await usersInfocollection.find(filter).toArray();
+
+
+      res.send(result);  // Send the modified result
+  } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
+
+
+
+// const result = await usersInfocollection.find(filter).toArray();
+
+//         const modifiedResult = result.map(user => {
+//             return {
+//                 _id: user._id,
+//                 email: user.email,
+//                 date: user.date,
+//                 role: user.role,
+//                 monthlySpent: user.monthlySpent.map(spent => ({
+//                     totalSpentt: spent.totalSpentt,
+//                     role: spent.role,
+//                     date: spent.date
+//                 }))
+//             };
+//         });
+
+//         res.send(modifiedResult);
+
+    app.get("/userr/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email : email };
+      try {
+          const result = await usersInfocollection.findOne(filter);
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+  });
+
+    app.get("/userr2/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email : email };
+      try {
+          const result = await usersInfocollection.findOne(filter);
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+  });
 
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -112,7 +296,6 @@ async function run() {
     app.get("/users/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
@@ -131,38 +314,93 @@ async function run() {
 
     app.post("/users/update", async (req, res) => {
       const { email, monthlySpent } = req.body;
+      const { accountName, date } = monthlySpent;
     
       try {
-        // Check if the user already exists
+        console.log("Incoming data:", req.body);
+    
         const query = { email };
         const existingUser = await usersInfocollection.findOne(query);
     
         if (existingUser) {
-          // Update the existing user with monthlySpent data
+          console.log("Existing user found:", existingUser);
+    
+          const month = new Date(date).getMonth();
+          const year = new Date(date).getFullYear();
+    
           await usersInfocollection.updateOne(query, {
-            $push: {
+            $pull: {
               monthlySpent: {
-                $each: [monthlySpent],
-                $position: 0 // Optional: Adjust position in the array if needed
+                accountName,
+                date: { $regex: `^${year}-${String(month + 1).padStart(2, "0")}` }
               }
             }
           });
-          res.send({ message: "User updated with monthlySpent data successfully" });
+    
+          await usersInfocollection.updateOne(query, {
+            $push: {
+              monthlySpent: { $each: [monthlySpent], $position: 0 }
+            }
+          });
+    
+          res.send({ message: "User updated with new monthlySpent data successfully" });
         } else {
-          // Insert new user if not exists
-          const newUser = {
-            email,
-            monthlySpent: [monthlySpent],
-            // Add other default fields as necessary
-          };
+          console.log("No existing user. Creating a new user.");
+          const newUser = { email, monthlySpent: [monthlySpent] };
           await usersInfocollection.insertOne(newUser);
           res.send({ message: "User created with monthlySpent data successfully" });
         }
       } catch (error) {
-        console.error("Error updating or inserting user:", error);
+        console.error("Error in /users/update:", error);
         res.status(500).send({ message: "Internal server error" });
       }
     });
+
+    app.post("/users/update2", async (req, res) => {
+      const { email, monthlySpent2 } = req.body;
+      const { accountName, date } = monthlySpent2;
+    
+      try {
+        console.log("Incoming data:", req.body);
+    
+        const query = { email };
+        const existingUser = await usersInfocollection.findOne(query);
+    
+        if (existingUser) {
+          console.log("Existing user found:", existingUser);
+    
+          const month = new Date(date).getMonth();
+          const year = new Date(date).getFullYear();
+    
+          await usersInfocollection.updateOne(query, {
+            $pull: {
+              monthlySpent2: {
+                accountName,
+                date: { $regex: `^${year}-${String(month + 1).padStart(2, "0")}` }
+              }
+            }
+          });
+    
+          await usersInfocollection.updateOne(query, {
+            $push: {
+              monthlySpent2: { $each: [monthlySpent2], $position: 0 }
+            }
+          });
+    
+          res.send({ message: "User updated with new monthlySpent data successfully" });
+        } else {
+          console.log("No existing user. Creating a new user.");
+          const newUser = { email, monthlySpent2: [monthlySpent2] };
+          await usersInfocollection.insertOne(newUser);
+          res.send({ message: "User created with monthlySpent data successfully" });
+        }
+      } catch (error) {
+        console.error("Error in /users/update:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
+    });
+    
+    
     
 
     app.post("/users/updateSellery", async (req, res) => {
@@ -329,33 +567,150 @@ async function run() {
     
 
 
-    app.patch("/users/:email", async (req, res) => {
+    app.patch("/users-photo/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const body = req.body;
-      const updatedoc = {
+    
+      const updatedDoc = {
         $set: {
-          fullName: body.fullName,
-          companyLogo: body.companyLogo,
-          fullAddress: body.fullAddress,
-          number: body.number,
-          facebookID: body.facebookID,
-          instagramID: body.instagramID,
-          linkedinID: body.linkedinID,
-          twitterID: body.twitterID,
-          youtubeID: body.youtubeID,
-          whatsappID: body.whatsappID,
-          bkashPersonal: body.bkashPersonal,
+          photo: body.photo || undefined,
         },
       };
+    
       try {
-        const result = await usersInfocollection.updateOne(filter, updatedoc);
+        const result = await usersInfocollection.updateOne(filter, updatedDoc);
         res.send(result);
       } catch (error) {
         console.error(error);
         res.status(500).send("Error updating user");
       }
     });
+
+
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const body = req.body;
+    
+      const updatedDoc = {
+        $set: {
+          name: body.name || undefined,
+          companyLogo: body.companyLogo || undefined,
+          companyName: body.companyName || undefined,
+          contactNumber: body.contactNumber || undefined,
+          fatherName: body.fatherName || undefined,
+          motherName: body.motherName || undefined,
+          guardianMobile: body.guardianMobile || undefined,
+          nationality: body.nationality || undefined,
+          NID: body.NID || undefined,
+          birthRegId: body.birthRegId || undefined,
+          blood: body.blood || undefined,
+          dateOfBirth: body.dateOfBirth || undefined,
+          religion: body.religion || undefined,
+          gender: body.gender || undefined,
+          maritalStatus: body.maritalStatus || undefined,
+          skill: body.skill || undefined,
+          selectedDivision: body.selectedDivision || undefined,
+          selectedDistrict: body.selectedDistrict || undefined,
+          selectedUpazila: body.selectedUpazila || undefined,
+          presentAddress: body.presentAddress || undefined,
+          selectedDivision2: body.selectedDivision2 || undefined,
+          selectedDistrict2: body.selectedDistrict2 || undefined,
+          selectedUpazila2: body.selectedUpazila2 || undefined,
+          permanentAddress: body.permanentAddress || undefined,
+          facebookID: body.facebookID || undefined,
+          instagramID: body.instagramID || undefined,
+          linkedinID: body.linkedinID || undefined,
+          twitterID: body.twitterID || undefined,
+          youtubeID: body.youtubeID || undefined,
+          whatsappID: body.whatsappID || undefined,
+          bkashPersonal: body.bkashPersonal || undefined,
+          occupation: body.occupation || undefined,
+          lastEducationDegree: body.lastEducationDegree || undefined,
+          lastEducationBoard: body.lastEducationBoard || undefined,
+          lastEducationInstitute: body.lastEducationInstitute || undefined,
+          groupName: body.groupName || undefined,
+          yearOfPassing: body.yearOfPassing || undefined,
+          status: body.status || undefined,
+          gpaCgpa: body.gpaCgpa || undefined,
+        },
+      };
+    
+      try {
+        const result = await usersInfocollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user");
+      }
+    });
+    
+
+    app.get("/userr3/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const projection = {
+        selectedDivision: 1,
+        selectedDistrict: 1,
+        selectedUpazila: 1,
+        presentAddress: 1,
+        selectedDivision2: 1,
+        selectedDistrict2: 1,
+        selectedUpazila2: 1,
+        permanentAddress: 1,
+        facebookID: 1,
+        instagramID: 1,
+        linkedinID: 1,
+        twitterID: 1,
+        youtubeID: 1,
+        whatsappID: 1,
+        occupation: 1,
+        lastEducationDegree: 1,
+        lastEducationBoard: 1,
+        lastEducationInstitute: 1,
+        groupName: 1,
+        yearOfPassing: 1,
+        status: 1,
+        gpaCgpa: 1,
+        _id: 0, 
+        fullName: 1,
+        role:1,
+        email:1,
+        photo:1,
+        name:1,
+        companyLogo: 1,
+        companyName: 1,
+        contactNumber: 1,
+        fatherName: 1,
+        motherName: 1,
+        guardianMobile: 1,
+        nationality: 1,
+        NID: 1,
+        birthRegId: 1,
+        blood: 1,
+        dateOfBirth: 1,
+        religion: 1,
+        gender: 1,
+        maritalStatus: 1,
+        edu: 1,
+        skill:1
+      };
+    
+      try {
+        const result = await usersInfocollection.findOne(filter, { projection });
+        if (result) {
+          res.send(result);
+        } else {
+          res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).send({ message: "Error fetching data" });
+      }
+    });
+    
+    
 
     app.put("/users/payoneer/:id", async (req, res) => {
       const id = req.params.id;
@@ -480,7 +835,7 @@ async function run() {
     
 
         ///////////////////////////////////////////////////////////////////
-    //                         campaign
+    //                         noti 
     ////////////////////////////////////////////////////////////////////
     app.post("/notification", async (req, res) => {
       const filter = req.body;
@@ -526,15 +881,97 @@ async function run() {
         res.status(500).send({ message: "Error updating notification", error });
       }
     });
-    
+
+
         ///////////////////////////////////////////////////////////////////
-    //                         campaign
+    //                         noti 
     ////////////////////////////////////////////////////////////////////
-    app.post("/bankInfo", async (req, res) => {
+    app.post("/editNotification", async (req, res) => {
       const filter = req.body;
-      const result = await bankInfocollection.insertOne(filter);
+      const result = await editNotificationcollection.insertOne(filter);
       res.send(result);
     });
+
+    app.get("/editNotification/:email", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await editNotificationcollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/editNotification", async (req, res) => {
+      const result = await editNotificationcollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/editNotification/:id", async (req, res) => {
+      const id = req.params.id;
+    
+      try {
+        // Check if `id` is a valid ObjectId
+        const filter = { _id: new ObjectId(id) };
+        
+        // Construct the update object
+        const updateData = {
+          $set: {
+            status: req.body.status,
+          },
+        };
+        
+        // Perform the update
+        const result = await editNotificationcollection.updateOne(filter, updateData);
+    
+        if (result.modifiedCount === 1) {
+          res.status(200).send({ message: "Notification updated successfully" });
+        } else {
+          res.status(404).send({ message: "Notification not found or already updated" });
+        }
+      } catch (error) {
+        res.status(500).send({ message: "Error updating notification", error });
+      }
+    });
+    
+    ///////////////////////////////////////////////////////////////////
+    //                         campaign
+    ///////////////////////////////////////////////////////////////////
+
+
+    app.post('/bankInfo', async (req, res) => {
+      try {
+        const bankData = req.body;
+        const result = await bankInfocollection.insertOne(bankData);
+        res.status(201).send(result);
+      } catch (err) {
+        res.status(500).send({ error: 'Failed to insert bank info', details: err });
+      }
+    });
+    
+
+
+    app.patch("/bankInfo/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          account: body.account,
+          bankName: body.bankName,
+          bankingType: body.bankingType,
+          branch: body.branch,
+          card: body.card,
+          district: body.district,
+          imageUrl: body.imageUrl,  
+          name: body.name,
+          routingNumber: body.routingNumber,
+          swiftCode: body.swiftCode,
+        },
+      };
+
+      const result = await pageSetupCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+
 
     app.get("/bankInfo/:id", async (req, res) => {
       const email = req.params.id;
@@ -548,30 +985,8 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/bankInfo/:id', async (req, res) => {
-      const { id } = req.params; // Get the bank info ID from URL parameters
-      const updateData = req.body; // Get the data to be updated from the request body
-    
-      try {
-        // Update the bank info document in the MongoDB collection
-        const result = await bankInfocollection.updateOne(
-          { _id: new ObjectId(id) }, // Convert the string ID to MongoDB ObjectId
-          { $set: updateData } // Set the updated fields
-        );
-    
-        // Check if the document was modified
-        if (result.modifiedCount > 0) {
-          res.status(200).send({ message: 'Bank info updated successfully' });
-        } else {
-          res.status(404).send({ message: 'Bank info not found or not updated' });
-        }
-      } catch (error) {
-        // Handle any errors that occur during the update
-        res.status(500).send({ message: 'Error updating bank info', error });
-      }
-    });
 
-
+    
        app.delete("/bankInfo/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -579,176 +994,135 @@ async function run() {
       res.send(result);
     });
     
-    
+    ////////////////////////
+    app.post("/activity", async (req, res) => {
+      const filter = req.body;
+      const result = await activityCollection.insertOne(filter);
+      res.send(result);
+    });
 
-    ///////////////////////////////////////////////////////////////////
+
+    app.get("/activity", async (req, res) => {
+      try {
+        const result = await activityCollection
+          .find() // Find all documents
+          .sort({ date: -1 }) // Sort by date in descending order (latest first)
+          .limit(100) // Limit the result to the latest 100 entries
+          .toArray(); // Convert the result to an array
+    
+        res.send(result); // Send the result as a response
+      } catch (error) {
+        console.error("Error fetching activity data:", error);
+        res.status(500).send("Internal Server Error"); // Handle errors
+      }
+    });
+
+    app.get("/myActivity/:email", async (req, res) => {
+      const email = req.params.email;
+    
+      if (!email) {
+        return res.status(400).send({ message: "Email is required" });
+      }
+    
+      const filter = { email: email };
+    
+      try {
+        const result = await activityCollection.find(filter).toArray(); // Ensure collection is correct
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).send({ message: "Error fetching data" });
+      }
+    });
+    
+  
+     ///////////////////////////////////////////////////////////////////
     //                         campaign
     ////////////////////////////////////////////////////////////////////
-    app.post("/campaigns", async (req, res) => {
+    app.post("/pageSetup", async (req, res) => {
       const filter = req.body;
-      const result = await campaignCollection.insertOne(filter);
+      const result = await pageSetupCollection.insertOne(filter);
       res.send(result);
     });
 
-    app.get("/campaings", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await campaignCollection.find(query).toArray();
+
+    app.get("/pageSetup", async (req, res) => {
+      const result = await pageSetupCollection.find().toArray();
       res.send(result);
     });
 
-    app.get("/campaigns", async (req, res) => {
-      const result = await campaignCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/campaigns/:email", async (req, res) => {
+    app.get("/pageSetup/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
-      const result = await campaignCollection.findOne(filter);
+      const result = await pageSetupCollection.findOne(filter);
       res.send(result);
     });
 
-    app.get("/campaign/:id", async (req, res) => {
+    app.get("/pageSetup/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { clientEmail: email };
+      try {
+          const result = await pageSetupCollection.find(filter).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+  });
+
+    app.get("/mypageSetup/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      try {
+          const result = await pageSetupCollection.find(filter).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+  });
+  
+
+    app.get("/pageSetup/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const result = await campaignCollection.findOne(filter);
+      const result = await pageSetupCollection.findOne(filter);
       res.send(result);
     });
 
-    app.delete("/campaigns/:id", async (req, res) => {
+    app.delete("/pageSetup/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const result = await campaignCollection.deleteOne(filter);
+      const result = await pageSetupCollection.deleteOne(filter);
       res.send(result);
     });
 
-    app.patch("/campaings/:id", async (req, res) => {
+    app.patch("/pageSetup/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const body = req.body;
       const updatenew = {
         $set: {
-          campaignName: body.campaignName,
-          tBudged: body.tBudged,
+          itemName: body.itemName,
+          totalBill: body.totalBill,
+          totalPaid: body.totalPaid,
+        },
+      };
+
+      const result = await pageSetupCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+    app.patch("/pageSetup/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
           status: body.status,
-          tSpent: body.tSpent,
-          dollerRate: body.dollerRate,
         },
       };
-
-      const result = await campaignCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.patch("/campaings/status/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          status: body.status,
-        },
-      };
-      const result = await campaignCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.put("/campaings/totalBudged/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          tBudged: body.tBudged,
-        },
-      };
-      const result = await campaignCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.put("/campaings/totalSpent/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          tSpent: body.tSpent,
-        },
-      };
-      const result = await campaignCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    ///////////////////////////// ad account table ////////////////////
-    app.post("/ads", async (req, res) => {
-      const filter = req.body;
-      const result = await adAccountCollection.insertOne(filter);
-      res.send(result);
-    });
-    app.get("/ads", async (req, res) => {
-      const result = await adAccountCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/ads/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { id: id };
-      const result = await adAccountCollection.find(filter).toArray();
-      res.send(result);
-    });
-    app.get("/ads/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { id: id };
-      const result = await adAccountCollection.find(filter).toArray();
-      res.send(result);
-    });
-    app.get("/ads/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await adAccountCollection.findOne(filter);
-      res.send(result);
-    });
-
-    ////////////////// employee salary table ////////////////////
-    app.post("/sellery", async (req, res) => {
-      const filter = req.body;
-      const result = await salaryCollection.insertOne(filter);
-      res.send(result);
-    });
-    app.get("/sellery", async (req, res) => {
-      const result = await salaryCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/sellery/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { id: id };
-      const result = await salaryCollection.find(filter).toArray();
-      res.send(result);
-    });
-    app.get("/sellery/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await salaryCollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.patch("/salary/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          totalWork: body.totalWork,
-          paid: body.paid,
-          saleryRate: body.saleryRate,
-          bonus: body.bonus,
-          mounth: body.mounth,
-        },
-      };
-
-      const result = await salaryCollection.updateOne(filter, updatenew);
+      const result = await pageSetupCollection.updateOne(filter, updatenew);
       res.send(result);
     });
 
@@ -759,6 +1133,7 @@ async function run() {
       const result = await monthlySpentCollection.insertOne(filter);
       res.send(result);
     });
+
     app.get("/monthlySpent", async (req, res) => {
       const result = await monthlySpentCollection.find().toArray();
       res.send(result);
@@ -796,241 +1171,128 @@ async function run() {
       res.send(result);
     });
 
-    ////////////////// monthlySpent sellery ////////////////////
-
-    app.post("/selleryPay", async (req, res) => {
-      const filter = req.body;
-      const result = await monthlySpentCollection.insertOne(filter);
-      res.send(result);
-    });
-    
-    app.get("/selleryPay", async (req, res) => {
-      const result = await monthlySpentCollection.find().toArray();
-      res.send(result);
-    });
-
-
-    app.get("/selleryPay/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await monthlySpentCollection.findOne(filter);
-      res.send(result);
-    });
-
-
-    /////////// user ad account activities table ////////////////////
-    app.post("/userad", async (req, res) => {
-      const filter = req.body;
-      const result = await userAdCollection.insertOne(filter);
-      res.send(result);
-    });
-    app.get("/userad", async (req, res) => {
-      const result = await userAdCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/userad/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { id: id };
-      const result = await userAdCollection.find(filter).toArray();
-      res.send(result);
-    });
-    app.get("/userad/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await userAdCollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.patch("/userad/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      console.log(body);
-
-      const updatenew = {
-        $set: {
-          accountName: body.accountName,
-          date: body.date,
-          threshold: body.threshold,
-          currentBallence: body.currentBallence,
-          totalSpent: body.totalSpent,
-          status: body.status,
-        },
-      };
-      const result = await userAdCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-
-    /////////// own work list table ////////////////////
-    app.post("/works", async (req, res) => {
-      const filter = req.body;
-      const result = await workListCollection.insertOne(filter);
-      res.send(result);
-    });
-    app.get("/works", async (req, res) => {
-      const result = await workListCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/works/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { id: id };
-      const result = await workListCollection.find(filter).toArray();
-      res.send(result);
-    });
-    app.get("/works/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await workListCollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.post("/ownSelary", async (req, res) => {
-      const filter = req.body;
-      const result = await OwnSelaryCollection.insertOne(filter);
-      res.send(result);
-    });
-
-    app.get("/ownSelary", async (req, res) => {
-      const result = await OwnSelaryCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/ownSelary", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
-      const result = await OwnSelaryCollection.find(query).toArray();
-      res.send(result);
-    });
-
-    ///////////////////////////////////////////////////////////////////////////
-    //                         links social data
-    ///////////////////////////////////////////////////////////////////////////
-
-    app.get("/links", async (req, res) => {
-      const result = await allLinksCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.post("/links", async (req, res) => {
-      const user = req.body;
-      const result = await allLinksCollection.insertOne(user);
-      res.send(result);
-    });
-
-
-    ///////////////////////////////////////////////////////////////////////////
-    //                         logo social data
-    ///////////////////////////////////////////////////////////////////////////
-
-    app.get("/logos", async (req, res) => {
-      const result = await allLogoCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.post("/logos", async (req, res) => {
-      const user = req.body;
-      const result = await allLogoCollection.insertOne(user);
-      res.send(result);
-    });
-
-
     ////////////////////////////////////////////////////////
     //                 client
     ////////////////////////////////////////////////////////
 
     app.post("/clients", async (req, res) => {
+      const filter = req.body;
+      const result = await clientCollection.insertOne(filter);
+      res.send(result);
+    });
+    
+    app.get("/clients", async (req, res) => {
+      const result = await clientCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/onlyClientEmail", async (req, res) => {
       
-      const { clientEmail, clientPhone, employeeEmail } = req.body;
-      // Check if client with the same email or phone number already exists, and if the employeeEmail matches
-      const existingClient = await clietCollection.findOne({
-        $and: [
-          {
-            $or: [
-              { clientEmail: clientEmail },
-              { clientPhone: clientPhone }
-            ]
-          },
-          { employeeEmail: employeeEmail }
-        ]
-      });
-    
-      if (existingClient) {
-        // If a client with the same email or phone exists, and matches the employeeEmail, send a response indicating duplication
-        return res.status(400).send({ message: "Client with the same email or phone number already exists for this employee." });
+      try {
+          const result = await clientCollection.find({}, { projection: { clientEmail: 1,employeeEmail: 1, _id: 0 } }).toArray();
+          res.send(result);
+      } catch (error) {
+          res.status(500).send({ error: "Failed to fetch clients' emails" });
       }
-    
-      // If no duplication, insert the new client data
-      const result = await clietCollection.insertOne(req.body);
-      res.send(result);
-    });
-    
-    
-    
+  });
 
-    app.get("/clients", async (req, res) => {
-      const result = await clietCollection.find().toArray();
-      res.send(result);
-    });
 
-    app.get("/clients", async (req, res) => {
-      const email = req.query.email;
-      const query = { employeeEmail: email };
-      const result = await clietCollection.find(query).toArray();
-      res.send(result);
-    });
+app.get("/clientEmails/:email", async (req, res) => {
+  const email = req.params.email;
 
-    app.get("/clients/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { employeeEmail: email };
-      const result = await clietCollection.findOne(filter);
-      res.send(result);
-    });
+  // If "all" is passed, return all clients
+  const filter = email === "all" ? {} : { employeeEmail: email };
 
-    app.get("/clients/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await clietCollection.findOne(filter);
+  try {
+      const result = await clientCollection.find(filter, { projection: {date:1, clientEmail: 1, employeeEmail: 1, _id: 0 } })
+      .toArray();
       res.send(result);
-    });
+  } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+  }
+ });
+
+  app.get("/clientsPaymentss/:email", async (req, res) => {
+    const { email } = req.params; // Extract 'email' from URL params
+    const filter = email === "all" ? {} : { employeeEmail: email }; 
+
+    try {
+        const users = await clientCollection
+            .find(filter, { projection: { payments: 1, email: 1, date: 1 } })
+            .toArray();
+        res.send(users);
+    } catch (error) {
+        console.error("Error fetching client payments:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
+});
+
+
+app.get("/clientsCampaingss/:email", async (req, res) => {
+  const { email } = req.params; // Extract 'email' from URL params
+  const filter = email === "all" ? {} : { employeeEmail: email }; // Apply filter based on 'email'
+
+  try {
+      // Query for users based on filter, projecting only the `campaings` field
+      const users = await clientCollection
+          .find(filter, { projection: { campaings: 1, _id: 0 } })
+          .toArray();
+
+      // Combine all campaigns into a single array
+      const allCampaigns = users.flatMap(user => user.campaings || []);
+
+      if (allCampaigns.length > 0) {
+          res.send(allCampaigns); // Send only the campaigns data
+      } else {
+          res.status(404).send({ message: "No campaigns found" }); // No data found
+      }
+
+  } catch (error) {
+      console.error("Error fetching client campaigns:", error);
+      res.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
+
+app.get("/clientsPageService/:role", async (req, res) => {
+    const role = req.params.role;
+
+    try {
+        // Fetch all documents from the clientCollection
+        const users = await clientCollection
+            .find({}, { projection: { pageService: 1, _id: 0 } })
+            .toArray();
+
+        // Filter the pageService array by the given role
+        const filteredPageServices = users.flatMap(user => 
+            (user.pageService || []).filter(service => service.role === role)
+        );
+
+        if (filteredPageServices.length > 0) {
+            res.send(filteredPageServices); // Send only the filtered pageService data
+        } else {
+            res.status(404).send({ message: "No page service data found for the specified role" });
+        }
+    } catch (error) {
+        console.error("Error fetching page service data:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
+});
+
+
+
+
+
 
     app.delete("/clients/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const result = await clietCollection.deleteOne(filter);
+      const result = await clientCollection.deleteOne(filter);
       res.send(result);
-    });
+     });
 
-    app.patch("/clients/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { clientEmail: email };
-      const body = req.body;
-      
-      console.log('Received email:', email);
-      console.log('Received body:', body);
-  
-      const updatenew = {
-          $set: {
-              tSpent: body.tSpent,
-              tPayment: body.tPayment,
-              tBudged: body.tBudged,
-              tBill: body.tBill,
-          },
-      };
-  
-      try {
-          const result = await clietCollection.updateOne(filter, updatenew); // Ensure clientCollection is correctly initialized
-          console.log('Update result:', result);
-          res.send(result);
-      } catch (error) {
-          console.error('Error updating client:', error);
-          res.status(500).send({ error: 'An error occurred while updating the client' });
-      }
-  });
-
-  app.patch("/clients/:id", async (req, res) => {
+     app.patch("/clients/:id", async (req, res) => {
     try {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -1040,80 +1302,523 @@ async function run() {
         $set: {
           clientName: body.clientName,
           clientPhone: body.clientPhone,  
+          clientEmail: body.clientEmail,  
         },
       };
   
-      const result = await clietCollection.updateOne(filter, updateDoc);
+      const result = await clientCollection.updateOne(filter, updateDoc);
       res.send(result);
     } catch (error) {
       console.error("Error updating client:", error);
       res.status(500).send({ message: "Failed to update client", error });
     }
-  });
-  app.delete("/clients/:id", async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) };
-    const result = await clietCollection.deleteOne(filter);
-    res.send(result);
-  });
+     });
 
-  app.patch("/client/update/:id", async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) };
-    const body = req.body;
-    const updatenew = {
-      $set: {
-        clientEmail: body.clientEmail,
-        clientName: body.clientName,
-        clientPhone: body.clientPhone,
-      },
-    };
+     app.get("/myclients/:email", async (req, res) => {
+      const email = req.params.email;
+  
+      // If "all" is passed, return all clients
+      const filter = email === "all" ? {} : { employeeEmail: email };
+  
+      try {
+          const result = await clientCollection.find(filter).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+     });
 
-    const result = await clietCollection.updateOne(filter, updatenew);
-    res.send(result);
+
+  //   app.get("/myclients/:email", async (req, res) => {
+  //     const email = req.params.email;
+  
+  //     // Set the filter based on the email
+  //     const filter = email === "all" ? {} : { employeeEmail: email };
+  
+  //     try {
+  //         // Fetch users with projection
+  //         const users = await clientCollection
+  //             .find(filter, { projection: { ids:1, id:1, clientName: 1, _id: 1, date: 1, employeeEmail: 1,campaings:1,pageService:1, payments: 1 } })
+  //             .toArray();
+  
+  //         const transformedUsers = users.map(user => ({
+  //             _id: user._id,
+  //             id: user.id,
+  //             clientName: user.clientName,
+  //             date: user.date,
+  //             employeeEmail: user.employeeEmail,
+  //             payments: user.payments?.map(payment => ({
+  //                 amount: payment.amount,
+  //                 id: payment.id,
+  //                 ids: payment.ids,
+  //                 date:payment.date
+  //             })) || [],
+  //             campaings: user.campaings?.map(payment => ({
+  //                 tSpent: payment.tSpent,
+  //                 status: payment.status,
+  //                 dollerRate: payment.dollerRate,
+  //                 tBudged: payment.tBudged,
+  //                 date:payment.date
+  //             })) || [],
+  //             pageService: user.pageService?.map(payment => ({
+  //                 totalBill: payment.totalBill,
+  //                 status: payment.status,
+  //                 date:payment.date,
+  //             })) || []
+  //         }));
+  
+  //         res.send(transformedUsers);
+  //     } catch (error) {
+  //         console.error("Error fetching clients:", error);
+  //         res.status(500).send({ message: "Internal Server Error" });
+  //     }
+  // });
+  
+  
+
+    app.get("/myclients/:email", async (req, res) => {
+      const email = req.params.email;
+  
+      // If "all" is passed, set the filter to an empty object to fetch all clients
+      const filter = email === "all" ? {} : { employeeEmail: email };
+  
+      try {
+          // Fetch data from the database
+          const result = await clientCollection.find(filter).toArray();
+  
+          // Check if results are empty and handle accordingly
+          if (!result || result.length === 0) {
+              return res.status(404).send({ message: "No data found" });
+          }
+  
+          // Transform the result to include only specific fields
+          const transformedResult = result.map(client => ({
+              _id: client._id,
+              clientName: client.clientName,
+              id: client.id,
+              date: client.date,
+              employeeEmail: client.employeeEmail,
+              campaings: client.campaings || [],
+              pageService: client.pageService || [],
+              payments: client.payments?.map(payment => ({
+                  amount: payment.amount,
+                  id: payment.id,
+                  ids: payment.ids
+              })) || []
+          }));
+  
+          res.send(transformedResult);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
   });
   
+  
+  
+
+     app.get("/findClients/:id", async (req, res) => {
+    const id = req.params.id; // Use id from the URL parameter
+    try {
+        const filter = { id: id }; // Filter by `id`
+        const result = await clientCollection.findOne(filter);
+
+        if (!result) {
+            return res.status(404).send({ message: "Client not found" });
+        }
+
+        res.send(result); // Send the complete result including `payments` and `campaings`
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Internal server error" });
+    }
+     });
+
+      app.post("/clients/payments", async (req, res) => {
+      const { id, payments } = req.body;
+    
+      try {
+        // Query to find the client document
+        const query = { id }; // Ensure the client `id` matches
+    
+        // Find the client document by its `id`
+        const existingClient = await clientCollection.findOne(query);
+    
+        if (existingClient) {
+          // Add the payment to the existing client's payments array
+          const updateResult = await clientCollection.updateOne(query, {
+            $push: {
+              payments: {
+                $each: [payments],
+                $position: 0, // Add the payment at the beginning of the array
+              },
+            },
+          });
+    
+          if (updateResult.modifiedCount > 0) {
+            res.status(200).json({ message: "Payment added successfully" });
+          } else {
+            res.status(400).json({ message: "Failed to add payment" });
+          }
+        } else {
+          // Client not found, return an error
+          res.status(404).json({ message: "Client not found" });
+        }
+      } catch (error) {
+        console.error("Error updating client payments:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+      }
+      });
+
+      app.delete('/clientPayment/delete/:userId/:ids', async (req, res) => {
+        const { userId, ids } = req.params;
+      
+        try {
+            // Use the $pull operator to remove the specific campaign entry by `ids`
+            const result = await clientCollection.updateOne(
+                { id: userId }, 
+                { $pull: { payments: { ids: parseInt(ids) } } } // Remove campaign with matching `ids`
+            );
+      
+            if (result.modifiedCount === 0) {
+                return res.status(404).json({ message: 'Campaign not found or already deleted' });
+            }
+      
+            res.status(200).json({ message: 'Campaign deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting campaign:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+      });
+
+      app.post("/clients/campaings", async (req, res) => {
+      const { id, campaings } = req.body;
+    
+      try {
+        // Query to find the client document
+        const query = { id }; // Match the `id` of the client
+    
+        // Find the client document
+        const existingClient = await clientCollection.findOne(query);
+    
+        if (existingClient) {
+          // Add the new campaign to the `campaings` array
+          const updateResult = await clientCollection.updateOne(query, {
+            $push: {
+              campaings: {
+                $each: [campaings], // Add the new campaign object
+                $position: 0, // Insert at the beginning of the array
+              },
+            },
+          });
+    
+          if (updateResult.modifiedCount > 0) {
+            res.status(200).json({ message: "Campaign added successfully" });
+          } else {
+            res.status(400).json({ message: "Failed to add campaign" });
+          }
+        } else {
+          res.status(404).json({ message: "Client not found" });
+        }
+      } catch (error) {
+        console.error("Error updating client campaigns:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+      }
+      });
+
+      app.put('/clientCampaings/:userId/:spentId', async (req, res) => {
+      const { userId, spentId } = req.params;
+      const { status } = req.body; // Extract the new status from the request body
+  
+      try {
+          // Update the specific campaign's status using arrayFilters
+          const result = await clientCollection.updateOne(
+              {
+                  id: userId, 
+                  "campaings.ids": parseInt(spentId), 
+              },
+              {
+                  $set: { "campaings.$.status": status }, // Update the status
+              }
+          );
+  
+          if (result.modifiedCount === 0) {
+              return res.status(404).json({ message: 'User or campaign not found' });
+          }
+  
+          res.status(200).json({ message: 'Campaign status updated successfully' });
+      } catch (error) {
+          console.error('Error updating campaign status:', error);
+          res.status(500).json({ message: 'Server error' });
+      }
+      });
+
+     app.delete('/clientCampaings/delete/:userId/:ids', async (req, res) => {
+      const { userId, ids } = req.params;
+  
+      try {
+          // Use the $pull operator to remove the specific campaign entry by `ids`
+          const result = await clientCollection.updateOne(
+              { id: userId }, 
+              { $pull: { campaings: { ids: parseInt(ids) } } } // Remove campaign with matching `ids`
+          );
+  
+          if (result.modifiedCount === 0) {
+              return res.status(404).json({ message: 'Campaign not found or already deleted' });
+          }
+  
+          res.status(200).json({ message: 'Campaign deleted successfully' });
+      } catch (error) {
+          console.error('Error deleting campaign:', error);
+          res.status(500).json({ message: 'Server error' });
+      }
+      });
+
+     app.patch('/clientPaymentsUp/updates/:userId/:ids', async (req, res) => {
+        const { userId, ids } = req.params;
+        const { note, amount, date, paymentMethod } = req.body;
+    
+        try {
+            const result = await clientCollection.updateOne(
+                { id: userId, "payments.ids": parseInt(ids) },
+                {
+                    $set: {
+                        "payments.$.paymentMethod": paymentMethod,
+                        "payments.$.amount": amount,
+                        "payments.$.date": date,
+                        "payments.$.note": note,
+                    },
+                }
+            );
+    
+            if (result.modifiedCount === 0) {
+                return res.status(404).json({ message: 'Campaign not found or no changes made' });
+            }
+    
+            res.status(200).json({ message: 'Campaign updated successfully' });
+        } catch (error) {
+            console.error('Error updating campaign:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+      });
+
+     app.patch('/clientCampaings/update/:userId/:ids', async (req, res) => {
+        const { userId, ids } = req.params;
+        const { tSpent, campaignName, dollerRate, tBudged } = req.body;
+    
+        try {
+            const result = await clientCollection.updateOne(
+                { id: userId, "campaings.ids": parseInt(ids) },
+                {
+                    $set: {
+                        "campaings.$.tSpent": tSpent,
+                        "campaings.$.campaignName": campaignName,
+                        "campaings.$.dollerRate": dollerRate,
+                        "campaings.$.tBudged": tBudged,
+                    },
+                }
+            );
+    
+            if (result.modifiedCount === 0) {
+                return res.status(404).json({ message: 'Campaign not found or no changes made' });
+            }
+    
+            res.status(200).json({ message: 'Campaign updated successfully' });
+        } catch (error) {
+            console.error('Error updating campaign:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+      });
+
+      app.post("/clients/pageService", async (req, res) => {
+        const { id, pageService } = req.body;
+      
+        try {
+          // Query to find the client document
+          const query = { id }; // Match the `id` of the client
+      
+          // Find the client document
+          const existingClient = await clientCollection.findOne(query);
+      
+          if (existingClient) {
+            // Add the new campaign to the `campaings` array
+            const updateResult = await clientCollection.updateOne(query, {
+              $push: {
+                pageService: {
+                  $each: [pageService], // Add the new campaign object
+                  $position: 0, // Insert at the beginning of the array
+                },
+              },
+            });
+      
+            if (updateResult.modifiedCount > 0) {
+              res.status(200).json({ message: "Campaign added successfully" });
+            } else {
+              res.status(400).json({ message: "Failed to add campaign" });
+            }
+          } else {
+            res.status(404).json({ message: "Client not found" });
+          }
+        } catch (error) {
+          console.error("Error updating client campaigns:", error);
+          res.status(500).json({ message: "Internal server error", error: error.message });
+        }
+        });
+
+     app.put('/clientPageService/:userId/:spentId', async (req, res) => {
+        const { userId, spentId } = req.params;
+        const { status } = req.body; // Extract the new status from the request body
+    
+        try {
+            // Update the specific campaign's status using arrayFilters
+            const result = await clientCollection.updateOne(
+                {
+                    id: userId, 
+                    "pageService.ids": parseInt(spentId), 
+                },
+                {
+                    $set: { "pageService.$.status": status }, // Update the status
+                }
+            );
+    
+            if (result.modifiedCount === 0) {
+                return res.status(404).json({ message: 'User or campaign not found' });
+            }
+    
+            res.status(200).json({ message: 'Campaign status updated successfully' });
+        } catch (error) {
+            console.error('Error updating campaign status:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+      });
+
+     app.delete('/clientPageService/delete/:userId/:ids', async (req, res) => {
+      const { userId, ids } = req.params;
+  
+      try {
+          // Use the $pull operator to remove the specific campaign entry by `ids`
+          const result = await clientCollection.updateOne(
+              { id: userId }, 
+              { $pull: { pageService: { ids: parseInt(ids) } } } // Remove campaign with matching `ids`
+          );
+  
+          if (result.modifiedCount === 0) {
+              return res.status(404).json({ message: 'Campaign not found or already deleted' });
+          }
+  
+          res.status(200).json({ message: 'Campaign deleted successfully' });
+      } catch (error) {
+          console.error('Error deleting campaign:', error);
+          res.status(500).json({ message: 'Server error' });
+      }
+      });
+
+     app.patch('/clientPageService/updates/:userId/:ids', async (req, res) => {
+    const { userId, ids } = req.params;
+    const { itemName, pageUrl, totalBill, role, pageName } = req.body; 
+
+    try {
+        // Use the $set operator to update the specific campaign by `ids`
+        const result = await clientCollection.updateOne(
+            { id: userId, "pageService.ids": parseInt(ids) },
+            {
+                $set: {
+                  "pageService.$.itemName": itemName,
+                 "pageService.$.pageUrl": pageUrl,
+                "pageService.$.totalBill": totalBill,
+                "pageService.$.role": role,
+                "pageService.$.pageName": pageName,
+                },
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'Campaign not found or no changes made' });
+        }
+
+        res.status(200).json({ message: 'Campaign updated successfully' });
+    } catch (error) {
+        console.error('Error updating campaign:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+     });
+
+
   /////////////////////////////////////////////////
   // employee payment ////////////////////
-  ////////////////////////////////////
+  ////////////////////////////////////////////////
 
   app.post("/employeePayment", async (req, res) => {
     const filter = req.body;
-    const result = await employeePaymentCollection.insertOne(filter);
+    const result = await adminPaymentCollection.insertOne(filter);
     res.send(result);
   });
   
 
   app.get("/employeePayment", async (req, res) => {
-    const result = await employeePaymentCollection.find().toArray();
+    const result = await adminPaymentCollection.find().toArray();
     res.send(result);
   });
 
-  app.get("/employeePayment", async (req, res) => {
-    const email = req.query.email;
-    const query = { employeeEmail: email };
-    const result = await employeePaymentCollection.find(query).toArray();
-    res.send(result);
-  });
+  app.get("/MyEmployeePayments/:email", async (req, res) => {
+    const email = req.params.email;
+    const filter = email === "all" ? {} : { employeeEmail: email };
+    try {
+        const result = await adminPaymentCollection.find(filter).toArray();
+        res.send(result);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).send({ message: "Error fetching data" });
+    }
+});
+
+app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all" ? { status: "Approved" } : { employeeEmail: email, status: "Approved" };  // Filter by "Approved" status
+
+  try {
+      const result = await adminPaymentCollection.find(filter).toArray();
+
+      if (result.length === 0) {
+          return res.status(404).send({ message: "No data found" });
+      }
+
+      const modifiedResult = result.map(user => {
+          return {
+              payAmount: user.payAmount,
+              charge: user.charge,
+              date: user.date,
+          };
+      });
+
+      res.send(modifiedResult);  // Send the modified result without the "status"
+  } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
 
   app.get("/employeePayment/:email", async (req, res) => {
     const email = req.params.email;
     const filter = { employeeEmail: email };
-    const result = await employeePaymentCollection.findOne(filter);
+    const result = await adminPaymentCollection.findOne(filter);
     res.send(result);
   });
 
   app.get("/employeePayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
-    const result = await employeePaymentCollection.findOne(filter);
+    const result = await adminPaymentCollection.findOne(filter);
     res.send(result);
   });
 
   app.delete("/employeePayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
-    const result = await employeePaymentCollection.deleteOne(filter);
+    const result = await adminPaymentCollection.deleteOne(filter);
     res.send(result);
   });
 
@@ -1125,13 +1830,32 @@ async function run() {
       $set: {
         status: body.status,
         payAmount: body.payAmount,
+        charge:body.charge,
         date: body.date,
         note: body.note,
         paymentMethod: body.paymentMethod,
       },
     };
 
-    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    const result = await adminPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/employeePayments/:ids", async (req, res) => {
+    const id = req.params.id;
+    const filter = { ids: id };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        status: body.status,
+        payAmount: body.payAmount,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await adminPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
 
@@ -1145,7 +1869,7 @@ async function run() {
         status: body.status,
       },
     };
-    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    const result = await adminPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
 
@@ -1159,60 +1883,86 @@ async function run() {
         status: body.status,
       },
     };
-    const result = await employeePaymentCollection.updateOne(filter, updatenew);
+    const result = await adminPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
 
   /////////////////////////////////////////////////
-  // ads payment ////////////////////
+  // employee payment ////////////////////
   ////////////////////////////////////
 
-  app.post("/adsPayment", async (req, res) => {
+  app.post("/contributorPayment", async (req, res) => {
     const filter = req.body;
-    const result = await adsPaymentCollection.insertOne(filter);
+    const result = await ContributorPaymentCollection.insertOne(filter);
     res.send(result);
   });
   
 
-  app.get("/adsPayment", async (req, res) => {
-    const result = await adsPaymentCollection.find().toArray();
+  app.get("/contributorPayment", async (req, res) => {
+    const result = await ContributorPaymentCollection.find().toArray();
     res.send(result);
   });
 
-  app.get("/adsPayment", async (req, res) => {
-    const email = req.query.email;
-    const query = { employeeEmail: email };
-    const result = await adsPaymentCollection.find(query).toArray();
-    res.send(result);
-  });
+  app.get("/MyContributorPayments/:email", async (req, res) => {
+    const email = req.params.email;
+    const filter = email === "all" ? {} : { employeeEmail: email };
+    try {
+        const result = await ContributorPaymentCollection.find(filter).toArray();
+        res.send(result);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).send({ message: "Error fetching data" });
+    }
+});
 
-  app.get("/adsPayment/:email", async (req, res) => {
+
+  app.get("/contributorPayment/:email", async (req, res) => {
     const email = req.params.email;
     const filter = { employeeEmail: email };
-    const result = await adsPaymentCollection.findOne(filter);
+    const result = await ContributorPaymentCollection.findOne(filter);
     res.send(result);
   });
 
-  app.get("/adsPayment/:id", async (req, res) => {
+  app.get("/contributorPayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
-    const result = await adsPaymentCollection.findOne(filter);
+    const result = await ContributorPaymentCollection.findOne(filter);
     res.send(result);
   });
 
-  app.delete("/adsPayment/:id", async (req, res) => {
+  app.delete("/contributorPayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
-    const result = await adsPaymentCollection.deleteOne(filter);
+    const result = await ContributorPaymentCollection.deleteOne(filter);
     res.send(result);
   });
 
-  app.patch("/adsPayment/:id", async (req, res) => {
+  app.patch("/contributorPayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
     const body = req.body;
     const updatenew = {
       $set: {
+        status: body.status,
+        payAmount: body.payAmount,
+        charge:body.charge,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await ContributorPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/contributorPayment/:ids", async (req, res) => {
+    const id = req.params.id;
+    const filter = { ids: id };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        status: body.status,
         payAmount: body.payAmount,
         date: body.date,
         note: body.note,
@@ -1220,11 +1970,110 @@ async function run() {
       },
     };
 
-    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    const result = await ContributorPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/contributorPayment/status/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
+    const result = await ContributorPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/contributorPayment/status/pending/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        
+        status: body.status,
+      },
+    };
+    const result = await ContributorPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  /////////////////////////////////////////////////
+  // salary payment ////////////////////
+  ////////////////////////////////////
+
+  app.post("/salaryPayment", async (req, res) => {
+    const filter = req.body;
+    const result = await salaryPaymentCollection.insertOne(filter);
     res.send(result);
   });
   
-  app.patch("/adsPayment/status/:id", async (req, res) => {
+
+  app.get("/salaryPayment", async (req, res) => {
+    const result = await salaryPaymentCollection.find().toArray();
+    res.send(result);
+  });
+
+  app.get("/MySalaryPayment/:email", async (req, res) => {
+    const email = req.params.email;
+    const filter = email === "all" ? {} : { employeeEmail: email };
+    try {
+        const result = await salaryPaymentCollection.find(filter).toArray();
+        res.send(result);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).send({ message: "Error fetching data" });
+    }
+});
+
+  app.delete("/salaryPayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const result = await salaryPaymentCollection.deleteOne(filter);
+    res.send(result);
+  });
+
+  app.patch("/salaryPayment/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        status: body.status,
+        payAmount: body.payAmount,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await salaryPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/salaryPayment/:ids", async (req, res) => {
+    const id = req.params.id;
+    const filter = { ids: id };
+    const body = req.body;
+    const updatenew = {
+      $set: {
+        status: body.status,
+        payAmount: body.payAmount,
+        date: body.date,
+        note: body.note,
+        paymentMethod: body.paymentMethod,
+      },
+    };
+
+    const result = await salaryPaymentCollection.updateOne(filter, updatenew);
+    res.send(result);
+  });
+
+  app.patch("/salaryPayment/status/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
     const body = req.body;
@@ -1234,11 +2083,11 @@ async function run() {
         status: body.status,
       },
     };
-    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    const result = await salaryPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
 
-  app.patch("/adsPayment/status/pending/:id", async (req, res) => {
+  app.patch("/salaryPayment/status/pending/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
     const body = req.body;
@@ -1248,32 +2097,32 @@ async function run() {
         status: body.status,
       },
     };
-    const result = await adsPaymentCollection.updateOne(filter, updatenew);
+    const result = await salaryPaymentCollection.updateOne(filter, updatenew);
     res.send(result);
   });
 
-////////////////////////logo////////////////////////////
-app.get("/logos", async (req, res) => {
-  const result = await allLogoCollection.find().toArray();
-  res.send(result);
-});
 
-app.get("/logos/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
 
-  const result = await allLogoCollection.findOne(filter);
-  res.send(result);
-});
     ////////////////////////////////////////////////////////
     //                 ads ad account
     ////////////////////////////////////////////////////////
 
     app.post("/adsAccount", async (req, res) => {
-      const filter = req.body;
-      const result = await adsAccountCollection.insertOne(filter);
+      const { accountName } = req.body;
+    
+      // Check if the accountName already exists
+      const existingAccount = await adsAccountCollection.findOne({ accountName });
+    
+      if (existingAccount) {
+        // Send an error response if accountName exists
+        return res.status(400).send({ message: "Account name already exists" });
+      }
+    
+      // Proceed to insert the new account if accountName doesn't exist
+      const result = await adsAccountCollection.insertOne(req.body);
       res.send(result);
     });
+    
 
     app.get("/adsAccount", async (req, res) => {
       const result = await adsAccountCollection.find().toArray();
@@ -1287,12 +2136,18 @@ app.get("/logos/:id", async (req, res) => {
       res.send(result);
     });
 
-    app.get("/adsAccount/:email", async (req, res) => {
+    app.get("/myAdsAccount/:email", async (req, res) => {
       const email = req.params.email;
-      const filter = { employeeEmail: email };
-      const result = await adsAccountCollection.findOne(filter);
-      res.send(result);
-    });
+      const filter = email === "all" ? {} : { employeeEmail: email };
+      try {
+          const result = await adsAccountCollection.find(filter).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).send({ message: "Error fetching data" });
+      }
+  });
+
     app.delete("/adsAccount/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -1308,7 +2163,7 @@ app.get("/logos/:id", async (req, res) => {
         $set: {
           accountName: body.accountName,
           date:body.date,
-          paymentDate: body.paymentDate,
+          paymentDate: body.date,
           threshold: body.threshold,
           currentBallence: body.currentBallence,
         },
@@ -1318,46 +2173,7 @@ app.get("/logos/:id", async (req, res) => {
       res.send(result);
     });
 
-    app.put("/adsAccount/currentBalance/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          currentBallence: body.currentBallence,
-        },
-      };
 
-      const result = await adsAccountCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-    app.put("/adsAccount/threshold/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          threshold: body.threshold,
-        },
-      };
-
-      const result = await adsAccountCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.put("/adsAccount/totalSpent/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          totalSpent: body.totalSpent,
-        },
-      };
-
-      const result = await adsAccountCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
 
     app.patch("/adsAccount/status/:id", async (req, res) => {
       const id = req.params.id;
@@ -1372,6 +2188,22 @@ app.get("/logos/:id", async (req, res) => {
       const result = await adsAccountCollection.updateOne(filter, updatenew);
       res.send(result);
     });
+
+    app.patch("/adsAccount/spend/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const body = req.body;
+      const updatenew = {
+        $set: {
+          totalSpent: body.totalSpent
+        },
+      };
+
+      const result = await adsAccountCollection.updateOne(filter, updatenew);
+      res.send(result);
+    });
+
+
 
     ////////////////////////////////////////////////////////
     //                 ads ad account center
@@ -1483,52 +2315,6 @@ app.get("/logos/:id", async (req, res) => {
     });
 
      
-
-    ///////////////////////////////////////////////////////////////////
-    //                       Mpayment
-    ////////////////////////////////////////////////////////////////////
-    app.post("/Mpayment", async (req, res) => {
-      const filter = req.body;
-      const result = await MpaymentCollection.insertOne(filter);
-      res.send(result);
-    });
-
-    app.get("/Mpayment", async (req, res) => {
-      const result = await MpaymentCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/Mpayment/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { email: email };
-      const result = await MpaymentCollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.patch("/Mpayment/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          amount: body.amount,
-          date: body.date,
-          note: body.note,
-          paymentMethod: body.paymentMethod,
-        },
-      };
-
-      const result = await MpaymentCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.delete("/Mpayment/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await MpaymentCollection.deleteOne(filter);
-      res.send(result);
-    });
-
    
   } finally {
     // Ensures that the client will close when you finish/error
