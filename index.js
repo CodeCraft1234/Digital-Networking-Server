@@ -189,25 +189,30 @@ async function run() {
       }
   });
 
-//   app.get("/myUser/:email", async (req, res) => {
+//   app.get("/myUser/spend/:email", async (req, res) => {
 //     const email = req.params.email;
-//     const filter = email === "all" ? {} : { email: email };  // If email is "all", return all users
+//     const filter = email === "all"
+//         ? { role: 'employee', monthlySpent: { $exists: true, $ne: [] } }  // Only employees with
+//         : { email: email, role: 'employee', monthlySpent: { $exists: true, $ne: [] } }; 
 
 //     try {
 //         const result = await usersInfocollection.find(filter).toArray();
 
-//         // Check if the result is empty and return an appropriate message
 //         if (result.length === 0) {
 //             return res.status(404).send({ message: "No data found" });
 //         }
 
-//         // Modify the data format to return the necessary fields
 //         const modifiedResult = result.map(user => {
-//             // Ensure monthlySpent exists before attempting to map
+
 //             const monthlySpent = user.monthlySpent || [];
+
+//             if (monthlySpent.length === 0) {
+//                 return null; 
+//             }
 
 //             return {
 //                 email: user.email,
+//                 employeeName:user.employeeName,
 //                 role: user.role,
 //                 monthlySpent: monthlySpent.map(spent => ({
 //                     totalSpentt: spent.totalSpentt,
@@ -215,9 +220,9 @@ async function run() {
 //                     date: spent.date
 //                 }))
 //             };
-//         });
+//         }).filter(user => user !== null);  
 
-//         res.send(modifiedResult);  // Send the modified result
+//         res.send(modifiedResult);  
 //     } catch (error) {
 //         console.error("Error fetching data:", error);
 //         res.status(500).send({ message: "Error fetching data" });
@@ -225,20 +230,166 @@ async function run() {
 // });
 
 
-app.get("/myUser/:email", async (req, res) => {
+
+app.get("/myUser/spend/:email", async (req, res) => {
   const email = req.params.email;
-  const filter = email === "all" ? {} : { email: email };  // If email is "all", return all users
+  const filter = email === "all" ? {} : { email: email };  
 
   try {
       const result = await usersInfocollection.find(filter).toArray();
 
-
-      res.send(result);  // Send the modified result
+      res.send(result);
   } catch (error) {
       console.error("Error fetching data:", error);
       res.status(500).send({ message: "Error fetching data" });
   }
 });
+
+
+
+
+app.get("/myUser/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all"
+    ? { role: 'employee', monthlySpent: { $exists: true, $ne: [] } }
+    : { email: email, role: 'employee', monthlySpent: { $exists: true, $ne: [] } };
+
+  try {
+    const myUser = await usersInfocollection
+      .find(filter, {
+        projection: {
+          monthlySpent: 1,
+          email: 1,
+          name: 1,
+          photo: 1
+        }
+      })
+      .toArray();
+
+    // Initialize the response object
+    const aggregatedData = {
+      totalSpentMeta: {},
+      totalSpentPage: {},
+      totalSpentGoogle: {}
+    };
+
+    // Aggregate data by month
+    myUser.forEach(user => {
+      (user?.monthlySpent || []).forEach(spent => {
+        const monthName = new Date(spent.date).toLocaleString('default', { month: 'long' });
+
+        if (spent.role === 'metaSpend') {
+          aggregatedData.totalSpentMeta[monthName] = 
+            (aggregatedData.totalSpentMeta[monthName] || 0) + spent.totalSpentt;
+        }
+
+        if (spent.role === 'googleSpend') {
+          aggregatedData.totalSpentGoogle[monthName] = 
+            (aggregatedData.totalSpentGoogle[monthName] || 0) + spent.totalSpentt;
+        }
+        if (spent.role === 'pageSpend') {
+          aggregatedData.totalSpentPage[monthName] = 
+            (aggregatedData.totalSpentPage[monthName] || 0) + spent.totalSpentt;
+        }
+      });
+    });
+
+    res.send(aggregatedData);
+
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
+app.get("/myUser/runningMonth/spent/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all"
+    ? { role: 'employee', monthlySpent: { $exists: true, $ne: [] } }
+    : { email: email, role: 'employee', monthlySpent: { $exists: true, $ne: [] } };
+
+  // Get the current month (0-based, so 0 is January)
+  const currentMonth = new Date().getMonth();
+
+  try {
+    const myUser = await usersInfocollection
+      .find(filter, {
+        projection: {
+          monthlySpent: 1,
+          email: 1,
+          name: 1,
+          photo: 1
+        }
+      })
+      .toArray();
+
+    // Initialize an array to store the results
+    const results = [];
+
+    // Aggregate data by current month for each user
+    myUser.forEach(user => {
+      let totalSpentMeta = 0;
+      let totalSpentGoogle = 0;
+
+      // Check if monthlySpent exists for the user
+      (user?.monthlySpent || []).forEach(spent => {
+        const spentMonth = new Date(spent.date).getMonth();
+
+        // If the spent data is from the current month
+        if (spentMonth === currentMonth) {
+          if (spent.role === 'metaSpend') {
+            totalSpentMeta += spent.totalSpentt;
+          }
+
+          if (spent.role === 'googleSpend') {
+            totalSpentGoogle += spent.totalSpentt;
+          }
+        }
+      });
+
+      // Only add user data if there's spend data for the current month
+      if (totalSpentMeta || totalSpentGoogle) {
+        results.push({
+          name: user.name,
+          email: user.email,
+          photo: user.photo,
+          totalSpentMeta,
+          totalSpentGoogle
+        });
+      }
+    });
+
+    res.send(results);
+
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
+
+app.get("/myUser/totalSpent/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all" ? {} : { email: email };
+
+  try {
+    const user = await usersInfocollection.findOne(filter);
+
+    if (user && user.monthlySpent) {
+      // Aggregate totalSpentt from monthlySpent
+      const totalSpent = user.monthlySpent.reduce((sum, record) => sum + (record.totalSpentt || 0), 0);
+      return res.send({ totalSpent }); // Send only the aggregated totalSpentt
+    }
+
+    res.send({ totalSpent: 0 }); // Return 0 if no data exists
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
 
 
 
@@ -1186,6 +1337,176 @@ app.get("/myUser/:email", async (req, res) => {
       res.send(result);
     });
 
+
+
+    app.get("/clients/homePage", async (req, res) => {
+      try {
+        await client.connect();
+    
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));  // Reset time to midnight for today
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());  // Start of the current week (Sunday)
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);  // Start of the current month
+    
+        const payments = await clientCollection.aggregate([
+          { $unwind: "$payments" },
+          { $project: { paymentDate: { $toDate: "$payments.date" }, amount: "$payments.amount" } },
+          {
+            $group: {
+              _id: null,
+              todayTotal: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$amount", 0]
+                }
+              },
+              weeklyTotal: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$amount", 0]
+                }
+              },
+              monthlyTotal: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$amount", 0]
+                }
+              }
+            }
+          }
+        ]).toArray();
+    
+        // Fetch campaign spends and campaign counts
+        const campaignSpends = await clientCollection.aggregate([
+          { $unwind: "$campaings" },
+          { $project: { campaignDate: { $toDate: "$campaings.date" }, tSpent: "$campaings.tSpent" } },
+          {
+            $group: {
+              _id: null,
+              todaySpend: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfToday] }, { $toDouble: "$tSpent" }, 0]
+                }
+              },
+              weeklySpend: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfWeek] }, { $toDouble: "$tSpent" }, 0]
+                }
+              },
+              monthlySpend: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfMonth] }, { $toDouble: "$tSpent" }, 0]
+                }
+              },
+              todayCampaigns: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfToday] }, 1, 0]
+                }
+              },
+              weeklyCampaigns: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfWeek] }, 1, 0]
+                }
+              },
+              monthlyCampaigns: {
+                $sum: {
+                  $cond: [{ $gte: ["$campaignDate", startOfMonth] }, 1, 0]
+                }
+              }
+            }
+          }
+        ]).toArray();
+    
+        // Fetch client counts by creation date
+        const clientCounts = await clientCollection.aggregate([
+          {
+            $project: {
+              createdAt: { $toDate: "$date" }  // Assuming you have a `createdAt` field
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              todayClients: {
+                $sum: {
+                  $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0]
+                }
+              },
+              weeklyClients: {
+                $sum: {
+                  $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0]
+                }
+              },
+              monthlyClients: {
+                $sum: {
+                  $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0]
+                }
+              }
+            }
+          }
+        ]).toArray();
+
+        const adminPayments = await adminPaymentCollection.aggregate([
+          {
+            $project: { paymentDate: { $toDate: "$date" }, payAmount: { $toDouble: "$payAmount" } }
+          },
+          {
+            $group: {
+              _id: null,
+              todayAdminPay: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$payAmount", 0]
+                }
+              },
+              weeklyAdminPay: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$payAmount", 0]
+                }
+              },
+              monthlyAdminPay: {
+                $sum: {
+                  $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$payAmount", 0]
+                }
+              }
+            }
+          }
+        ]).toArray();
+    
+        // Merge both payment, campaign, and client results
+        const result = {
+          today: payments[0]?.todayTotal || 0,
+          thisWeek: payments[0]?.weeklyTotal || 0,
+          thisMonth: payments[0]?.monthlyTotal || 0,
+          todaySpend: campaignSpends[0]?.todaySpend || 0,
+          thisWeekSpend: campaignSpends[0]?.weeklySpend || 0,
+          thisMonthSpend: campaignSpends[0]?.monthlySpend || 0,
+          todayCampaigns: campaignSpends[0]?.todayCampaigns || 0,
+          thisWeekCampaigns: campaignSpends[0]?.weeklyCampaigns || 0,
+          thisMonthCampaigns: campaignSpends[0]?.monthlyCampaigns || 0,
+          todayClients: clientCounts[0]?.todayClients || 0,
+          thisWeekClients: clientCounts[0]?.weeklyClients || 0,
+          thisMonthClients: clientCounts[0]?.monthlyClients || 0,
+          todayAdminPay: adminPayments[0]?.todayAdminPay || 0,
+          thisWeekAdminPay: adminPayments[0]?.weeklyAdminPay || 0,
+          thisMonthAdminPay: adminPayments[0]?.monthlyAdminPay || 0
+        };
+    
+        res.status(200).json(result);
+    
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).json({ error: "Failed to fetch data" });
+      } finally {
+        await client.close();
+      }
+    });
+    
+    
+    
+    
+
+    
+    
+    
+
     app.get("/onlyClientEmail", async (req, res) => {
       
       try {
@@ -1292,6 +1613,8 @@ app.get("/clientsPageService/:role", async (req, res) => {
       res.send(result);
      });
 
+
+
      app.patch("/clients/:id", async (req, res) => {
     try {
       const id = req.params.id;
@@ -1314,6 +1637,8 @@ app.get("/clientsPageService/:role", async (req, res) => {
     }
      });
 
+
+
      app.get("/myclients/:email", async (req, res) => {
       const email = req.params.email;
   
@@ -1328,6 +1653,89 @@ app.get("/clientsPageService/:role", async (req, res) => {
           res.status(500).send({ message: "Error fetching data" });
       }
      });
+
+
+     app.get("/myclients/total/:email", async (req, res) => {
+      const email = req.params.email;
+      const month = req.query.month && req.query.month !== "all" ? parseInt(req.query.month) : 0;
+    
+      // Define filter condition for email
+      const filter = email === "all" ? {} : { employeeEmail: email };
+    
+      // Apply month filter if provided
+      if (month > 0) {
+        filter.$expr = { $eq: [{ $month: { $dateFromString: { dateString: "$date" } } }, month] };
+      }
+    
+      try {
+        const clients = await clientCollection.find(filter).toArray();
+    
+        // Aggregating totals by payment method
+        const paymentData = clients.flatMap(client => client.payments || []);
+        const paymentData2 = clients.flatMap(client => client.campaings || []);
+    
+        const result = {
+          spendTotal: paymentData2.reduce((acc, p) => acc + parseFloat(p.tSpent || 0), 0),
+          spendBill: paymentData2.reduce(
+            (acc, campaign) => acc + parseFloat(campaign?.tSpent || 0) * parseFloat(campaign?.dollerRate || 0),
+            0
+          ),
+          bkashMarchent: paymentData.filter(p => p.paymentMethod === 'bkashMarchent')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          bkashPersonal: paymentData.filter(p => p.paymentMethod === 'bkashPersonal')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          nagadPersonal: paymentData.filter(p => p.paymentMethod === 'nagadPersonal')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          rocketPersonal: paymentData.filter(p => p.paymentMethod === 'rocketPersonal')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          IBBLBank: paymentData.filter(p => p.paymentMethod === 'IBBLBank')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          bank: paymentData.filter(p => p.paymentMethod === 'bank')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          DBBLBank: paymentData.filter(p => p.paymentMethod === 'DBBLBank')
+            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+          total: paymentData.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0)
+        };
+    
+        res.json(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        res.status(500).json({ message: "Error fetching data" });
+      }
+    });
+    
+
+    app.get("/myclients/total/monthly/:email", async (req, res) => {
+      const email = req.params.email;
+  
+      // Define filter condition for email
+      const filter = email === "all" ? {} : { employeeEmail: email };
+  
+      try {
+          const clients = await clientCollection.find(filter).toArray();
+  
+          // Extract all payments
+          const paymentData = clients.flatMap(client => client.payments || []);
+  
+          // Aggregate payments by month
+          const paymentByMonth = paymentData.reduce((acc, payment) => {
+              if (payment && payment.date) {
+                  const month = new Date(payment.date).toLocaleString('default', { month: 'long' });
+                  acc[month] = (acc[month] || 0) + (parseFloat(payment.amount) || 0);
+              }
+              return acc;
+          }, {});
+  
+          // Send the aggregated result
+          res.json(paymentByMonth);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+          res.status(500).json({ message: "Error fetching data" });
+      }
+  });
+  
+    
+    
 
 
   //   app.get("/myclients/:email", async (req, res) => {
@@ -1414,6 +1822,400 @@ app.get("/clientsPageService/:role", async (req, res) => {
           res.status(500).send({ message: "Error fetching data" });
       }
   });
+
+
+
+  app.get("/myclients/total/:email", async (req, res) => {
+    const email = req.params.email;
+  
+    // Set filter based on the email parameter
+    const filter = email === "all" ? {} : { employeeEmail: email };
+  
+    try {
+      // Fetch data from the database
+      const clients = await clientCollection.find(filter).toArray();
+  
+      if (!clients || clients.length === 0) {
+        return res.status(404).send({ message: "No data found" });
+      }
+  
+      // Calculate total values
+      const totalSpent = clients.reduce((acc, client) => {
+        return acc + (client.campaings || []).reduce((sum, c) => sum + parseFloat(c?.tSpent || 0), 0);
+      }, 0);
+  
+      const totalBill = clients.reduce((acc, client) => {
+        const campaignTotal = (client.campaings || []).reduce((sum, c) => {
+          const tSpent = parseFloat(c?.tSpent || 0);
+          const dollerRate = parseFloat(c?.dollerRate || 0);
+          return sum + tSpent * dollerRate;
+        }, 0);
+  
+        const pageServiceTotal = (client.pageService || []).reduce((sum, service) => {
+          return sum + parseFloat(service?.totalBill || 0);
+        }, 0);
+  
+        return acc + campaignTotal + pageServiceTotal;
+      }, 0);
+  
+      const totalPaid = clients.reduce((acc, client) => {
+        return acc + (client.payments || []).reduce((sum, p) => sum + parseFloat(p?.amount || 0), 0);
+      }, 0);
+  
+      const totalAdvanced = clients.reduce((acc, client) => {
+        const clientTotalBill = (client.campaings || []).reduce((sum, c) => {
+          const tSpent = parseFloat(c?.tSpent || 0);
+          const dollerRate = parseFloat(c?.dollerRate || 0);
+          return sum + tSpent * dollerRate;
+        }, 0) + 
+        (client.pageService || []).reduce((sum, service) => {
+          return sum + parseFloat(service?.totalBill || 0);
+        }, 0);
+  
+        const clientTotalPaid = (client.payments || []).reduce((sum, p) => sum + parseFloat(p?.amount || 0), 0);
+  
+        return acc + (clientTotalPaid > clientTotalBill ? clientTotalPaid - clientTotalBill : 0);
+      }, 0);
+  
+      // Send only the total values
+      res.send({
+        totalSpent: totalSpent.toFixed(2),
+        totalBill: totalBill.toFixed(2),
+        totalPaid: totalPaid.toFixed(2),
+        totalAdvanced: totalAdvanced.toFixed(2)
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+    }
+  });
+  
+
+
+  // app.get("/client/:email", async (req, res) => {
+  //   const email = req.params.email ;
+  //   const page = parseInt(req.query.page) || 1 ;
+  //   const limit = parseInt(req.query.limit) || 40 ;
+  
+  //   const filter = email === "all" ? {} : { employeeEmail: email };
+  
+  //   try {
+
+  //     const totalItems = await clientCollection.countDocuments(filter);
+  
+  //     const result = await clientCollection
+  //       .find(filter)
+  //       .sort({ clientName: 1 }) 
+  //       .skip((page - 1) * limit)
+  //       .limit(limit)
+  //       .toArray();
+  
+  //     if (!result || result.length === 0) {
+  //       return res.status(404).send({ message: "No data found" });
+  //     }
+  
+  //     // Transform the result to include only specific fields
+  //     const transformedResult = result.map((client) => ({
+  //       _id: client._id,
+  //       clientName: client.clientName,
+  //       clientPhone:client.clientPhone,
+  //       id: client.id,
+  //       date: client.date,
+  //       employeeEmail: client.employeeEmail,
+  //       campaings: client.campaings || [],
+  //       pageService: client.pageService || [],
+  //       payments: client.payments || []
+  //     }));
+  
+  //     res.send({
+  //       data: transformedResult,
+  //       totalItems,
+  //       totalPages: Math.ceil(totalItems / limit),
+  //       currentPage: page,
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //     res.status(500).send({ message: "Error fetching data" });
+  //   }
+  // });
+
+
+
+
+  app.get("/client/:email", async (req, res) => {
+    const email = req.params.email;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+  
+    const filter = email === "all" ? {} : { employeeEmail: email };
+  
+    try {
+      const totalItems = await clientCollection.countDocuments(filter);
+  
+      const result = await clientCollection
+        .find(filter)
+        .sort({ clientName: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .toArray();
+  
+      if (!result || result.length === 0) {
+        return res.status(404).send({ message: "No data found" });
+      }
+  
+      // Transform the result to include calculated fields
+      const transformedResult = result.map((client) => {
+        // Calculate total budget from campaigns
+        const totalBudget = (client.campaings || []).reduce(
+          (acc, { tBudged = 0 }) => acc + parseFloat(tBudged || 0),
+          0
+        );
+  
+        // Calculate total spent from campaigns
+        const totalSpent = (client.campaings || []).reduce(
+          (acc, { tSpent = 0}) =>
+            acc + parseFloat(tSpent || 0),
+          0
+        );
+  
+        const campaignTotal = (client.campaings || []).reduce(
+          (acc, { tSpent = 0, dollerRate = 0 }) => acc + parseFloat(tSpent) * parseFloat(dollerRate),
+          0
+        );
+  
+        // Calculate total from page service
+        const pageServiceTotal = (client.pageService || []).reduce(
+          (acc, { totalBill = 0 }) => acc + parseFloat(totalBill),
+          0
+        );
+  
+        // Final totalBill calculation matching frontend logic
+        const totalBill = parseFloat((campaignTotal + pageServiceTotal).toFixed(2));
+        
+  
+        // Calculate total payment received
+        const paymentReceived = (client.payments || []).reduce(
+          (acc, { amount = 0 }) => acc + parseFloat(amount || 0),
+          0
+        );
+  
+        // Calculate total (totalSpent + totalBill - paymentReceived)
+        const total =  totalBill - paymentReceived;
+  
+        return {
+          _id: client._id,
+          clientName: client.clientName,
+          clientPhone: client.clientPhone,
+          id: client.id,
+          date: client.date,
+          employeeEmail: client.employeeEmail,
+          campaings: client.campaings || [],
+          pageService: client.pageService || [],
+          payments: client.payments || [],
+          totalBudget,
+          totalSpent,
+          totalBill,
+          paymentReceived,
+          total,
+        };
+      });
+  
+      res.send({
+        data: transformedResult,
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+    }
+  });
+
+
+  app.get("/client/payments/:email", async (req, res) => {
+    const email = req.params.email;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const month = parseInt(req.query.month);
+    const year = parseInt(req.query.year);
+  
+    const filter = email === "all" ? {} : { "payments.employeeEmail": email };
+    const queryFilters = [];
+  
+    if (month) {
+      queryFilters.push({
+        $expr: {
+          $eq: [{ $month: { $toDate: "$payments.date" } }, month],
+        },
+      });
+    }
+  
+    if (year) {
+      queryFilters.push({
+        $expr: {
+          $eq: [{ $year: { $toDate: "$payments.date" } }, year],
+        },
+      });
+    }
+  
+    try {
+      const result = await clientCollection.aggregate([
+        { $match: filter },
+        { $unwind: "$payments" },
+        { $match: { $and: queryFilters } },
+        { $sort: { "payments.date": -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            "payments.amount": 1,
+            "payments.clientEmail": 1,
+            "payments.clientName": 1,
+            "payments.date": 1,
+            "payments.employeeEmail": 1,
+            "payments.id": 1,
+            "payments.note": 1,
+            "payments.paymentMethod": 1,
+            _id: 0,
+          },
+        },
+      ]).toArray();
+  
+      const formattedResult = result.map((item) => item.payments);
+  
+      // Count total items
+      const totalItemsResult = await clientCollection.aggregate([
+        { $match: filter },
+        { $unwind: "$payments" },
+        { $match: { $and: queryFilters } },
+        { $count: "totalItems" },
+      ]).toArray();
+  
+      const totalItems = totalItemsResult.length > 0 ? totalItemsResult[0].totalItems : 0;
+  
+      res.send({
+        data: formattedResult,
+        totalItems: totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+    }
+  });
+  
+  
+
+
+
+
+  app.get("/client/campaigns/:email", async (req, res) => {
+    const email = req.params.email;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const month = parseInt(req.query.month); // Parse the month from the query params
+    const year = parseInt(req.query.year); // Parse the year from the query params
+    const status = req.query.status || ""; // Parse status from query params
+    const role = req.query.role || ""; // Parse role from query params
+  
+    // Create initial filter based on email
+    const filter = email === "all" ? {} : { "campaings.email": email };
+  
+    // Create query filters array
+    const queryFilters = [];
+  
+    // Apply month filter if provided
+    if (month) {
+      queryFilters.push({
+        $expr: {
+          $eq: [
+            { $month: { $dateFromString: { dateString: "$campaings.date" } } },
+            month,
+          ],
+        },
+      });
+    }
+  
+    // Apply year filter if provided
+    if (year) {
+      queryFilters.push({
+        $expr: {
+          $eq: [
+            { $year: { $dateFromString: { dateString: "$campaings.date" } } },
+            year,
+          ],
+        },
+      });
+    }
+  
+    // Apply status filter if provided
+    if (status && status !== "all") {
+      queryFilters.push({ "campaings.status": status });
+    }
+  
+    // Create role filter if provided
+    if (role) {
+      queryFilters.push({ "campaings.role": role });
+    }
+  
+    try {
+      const result = await clientCollection.aggregate([
+        { $match: filter },
+        { $unwind: "$campaings" },
+        { $match: { $and: queryFilters } }, // Apply all filters using $and
+        { $sort: { "campaings.date": -1 } }, // Sort by latest date (descending)
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            adsAccount: "$campaings.adsAccount",
+            campaignName: "$campaings.campaignName",
+            clientEmail: "$campaings.clientEmail",
+            clientName: "$clientName",
+            date: "$campaings.date",
+            dollerRate: "$campaings.dollerRate",
+            email: "$campaings.email",
+            id: "$id",
+            ids: "$campaings.ids",
+            pageName: "$campaings.pageName",
+            pageUrl: "$campaings.pageUrl",
+            role: "$campaings.role",
+            status: "$campaings.status",
+            tBudged: "$campaings.tBudged",
+            tSpent: "$campaings.tSpent",
+            _id: "$_id",
+          },
+        },
+      ]).toArray();
+  
+      // Count total items after filtering
+      const totalItems = await clientCollection.aggregate([
+        { $match: filter },
+        { $unwind: "$campaings" },
+        { $match: { $and: queryFilters } },
+        { $count: "totalItems" },
+      ]).toArray();
+  
+      const totalCampaigns = totalItems.length > 0 ? totalItems[0].totalItems : 0;
+  
+      res.send({
+        data: result,
+        totalItems: totalCampaigns,
+        totalPages: Math.ceil(totalCampaigns / limit),
+        currentPage: page,
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).send({ message: "Error fetching data" });
+    }
+  });
+  
+  
+
+
+  
   
   
   
@@ -1761,6 +2563,7 @@ app.get("/clientsPageService/:role", async (req, res) => {
     res.send(result);
   });
 
+  
   app.get("/MyEmployeePayments/:email", async (req, res) => {
     const email = req.params.email;
     const filter = email === "all" ? {} : { employeeEmail: email };
@@ -1772,6 +2575,155 @@ app.get("/clientsPageService/:role", async (req, res) => {
         res.status(500).send({ message: "Error fetching data" });
     }
 });
+
+
+
+
+
+
+app.get("/adminPay/total/monthly/:email", async (req, res) => {
+  const email = req.params.email;
+  const filter = email === "all" ? {} : { employeeEmail: email };
+
+  try {
+    const result = await adminPaymentCollection.find(filter).toArray();
+
+    // Filter and aggregate payments by month
+    const paymentByMonth = result.filter(payment => payment.status === 'Approved')
+      .reduce((acc, payment) => {
+        const month = new Date(payment.date).toLocaleString('default', { month: 'long' });
+        acc[month] = (acc[month] || 0) + parseFloat(payment.payAmount || 0);
+        return acc;
+      }, {});
+
+    // Aggregate charges by month
+    const paymentByMonthCharge = result.filter(payment => payment.status === 'Approved')
+      .reduce((acc, payment) => {
+        const month = new Date(payment.date).toLocaleString('default', { month: 'long' });
+        acc[month] = (acc[month] || 0) + parseFloat(payment.charge || 0);
+        return acc;
+      }, {});
+
+    // Return both aggregates as an object
+    res.json({
+      paymentByMonth,
+      paymentByMonthCharge
+    });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ message: "Error fetching data" });
+  }
+});
+
+
+
+app.get("/adminPay/total/:email", async (req, res) => {
+  const email = req.params.email;
+  const paymentMethod = req.query.method;
+  const status = req.query.status;
+  const month = req.query.month && req.query.month !== "all" ? parseInt(req.query.month) : 0;
+
+  // Build filters
+  const filter = {};
+
+  // Email filter
+  if (email !== "all") filter.employeeEmail = email;
+
+  // Payment method filter
+  if (paymentMethod !== "all") filter.paymentMethod = paymentMethod;
+
+  // Status filter
+  if (status !== "all") filter.status = status;
+
+  // Month filter
+  if (month > 0) {
+    filter.$expr = { $eq: [{ $month: { $dateFromString: { dateString: "$date" } } }, month] };
+  }
+
+
+  try {
+    const result = await adminPaymentCollection.find(filter).toArray();
+
+    // Define payment methods to calculate totals
+    const paymentMethods = ['nagadPersonal', 'bkashPersonal', 'rocketPersonal', 'bank', 'IBBLBank', 'DBBLBank'];
+    
+    // Calculate totals
+    const totals = paymentMethods.reduce((acc, method) => {
+      // Sum 'payAmount' only for payments that match the method & are approved
+      const totalForMethod = result
+        .filter(payment => payment.paymentMethod === method )
+        .reduce((sum, payment) => sum + parseFloat(payment.payAmount || 0), 0);
+
+      acc[method] = totalForMethod;
+      return acc;
+    }, {});
+
+    // Send back the calculated totals object
+    res.send(totals);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
+
+
+app.get("/adminPay/:email", async (req, res) => {
+  const email = req.params.email;
+  const paymentMethod = req.query.method;
+  const status = req.query.status;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 100;
+  const month = req.query.month && req.query.month !== "all" ? parseInt(req.query.month) : 0;
+
+  // Build filters
+  const filter = {};
+
+  // Email filter
+  if (email !== "all") filter.employeeEmail = email;
+
+  // Payment method filter
+  if (paymentMethod !== "all") filter.paymentMethod = paymentMethod;
+
+  // Status filter
+  if (status !== "all") filter.status = status;
+
+  // Month filter
+  if (month > 0) {
+    filter.$expr = { $eq: [{ $month: { $dateFromString: { dateString: "$date" } } }, month] };
+  }
+
+  try {
+    const totalItems = await adminPaymentCollection.countDocuments(filter);
+
+    const result = await adminPaymentCollection
+      .find(filter)
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    res.send({
+      data: result,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send({ message: "Error fetching data" });
+  }
+});
+
+
+
+
+
+
+
+
+
 
 app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
   const email = req.params.email;
