@@ -17,6 +17,16 @@ const client = new MongoClient(uri, {
   },
 });
 
+
+async function connectToDatabase() {
+  if (!client.isConnected?.()) {
+    await client.connect();
+    console.log("Connected to MongoDB successfully!");
+  }
+  return client;
+}
+
+
 async function run() {
   try {
     const usersInfocollection = client.db("Digital-Networking").collection("usersInfo");
@@ -181,6 +191,7 @@ async function run() {
   
     app.get("/allEmployees", async (req, res) => {
       try {
+        await connectToDatabase();
           const users = await usersInfocollection.find({}, { projection: {role:1, email: 1, _id: 1, name: 1, photo:1, contactNumber:1 } }).toArray();
           res.send(users);
       } catch (error) {
@@ -188,47 +199,6 @@ async function run() {
           res.status(500).send({ message: "Internal Server Error" });
       }
   });
-
-//   app.get("/myUser/spend/:email", async (req, res) => {
-//     const email = req.params.email;
-//     const filter = email === "all"
-//         ? { role: 'employee', monthlySpent: { $exists: true, $ne: [] } }  // Only employees with
-//         : { email: email, role: 'employee', monthlySpent: { $exists: true, $ne: [] } }; 
-
-//     try {
-//         const result = await usersInfocollection.find(filter).toArray();
-
-//         if (result.length === 0) {
-//             return res.status(404).send({ message: "No data found" });
-//         }
-
-//         const modifiedResult = result.map(user => {
-
-//             const monthlySpent = user.monthlySpent || [];
-
-//             if (monthlySpent.length === 0) {
-//                 return null; 
-//             }
-
-//             return {
-//                 email: user.email,
-//                 employeeName:user.employeeName,
-//                 role: user.role,
-//                 monthlySpent: monthlySpent.map(spent => ({
-//                     totalSpentt: spent.totalSpentt,
-//                     role: spent.role,
-//                     date: spent.date
-//                 }))
-//             };
-//         }).filter(user => user !== null);  
-
-//         res.send(modifiedResult);  
-//     } catch (error) {
-//         console.error("Error fetching data:", error);
-//         res.status(500).send({ message: "Error fetching data" });
-//     }
-// });
-
 
 
 app.get("/myUser/spend/:email", async (req, res) => {
@@ -244,8 +214,6 @@ app.get("/myUser/spend/:email", async (req, res) => {
       res.status(500).send({ message: "Error fetching data" });
   }
 });
-
-
 
 
 app.get("/myUser/:email", async (req, res) => {
@@ -309,7 +277,6 @@ app.get("/myUser/runningMonth/spent/:email", async (req, res) => {
     ? { role: 'employee', monthlySpent: { $exists: true, $ne: [] } }
     : { email: email, role: 'employee', monthlySpent: { $exists: true, $ne: [] } };
 
-  // Get the current month (0-based, so 0 is January)
   const currentMonth = new Date().getMonth();
 
   try {
@@ -324,19 +291,15 @@ app.get("/myUser/runningMonth/spent/:email", async (req, res) => {
       })
       .toArray();
 
-    // Initialize an array to store the results
     const results = [];
 
-    // Aggregate data by current month for each user
     myUser.forEach(user => {
       let totalSpentMeta = 0;
       let totalSpentGoogle = 0;
 
-      // Check if monthlySpent exists for the user
       (user?.monthlySpent || []).forEach(spent => {
         const spentMonth = new Date(spent.date).getMonth();
 
-        // If the spent data is from the current month
         if (spentMonth === currentMonth) {
           if (spent.role === 'metaSpend') {
             totalSpentMeta += spent.totalSpentt;
@@ -348,7 +311,6 @@ app.get("/myUser/runningMonth/spent/:email", async (req, res) => {
         }
       });
 
-      // Only add user data if there's spend data for the current month
       if (totalSpentMeta || totalSpentGoogle) {
         results.push({
           name: user.name,
@@ -378,7 +340,6 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
     const user = await usersInfocollection.findOne(filter);
 
     if (user && user.monthlySpent) {
-      // Aggregate totalSpentt from monthlySpent
       const totalSpent = user.monthlySpent.reduce((sum, record) => sum + (record.totalSpentt || 0), 0);
       return res.send({ totalSpent }); // Send only the aggregated totalSpentt
     }
@@ -391,32 +352,11 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
 });
 
 
-
-
-
-
-// const result = await usersInfocollection.find(filter).toArray();
-
-//         const modifiedResult = result.map(user => {
-//             return {
-//                 _id: user._id,
-//                 email: user.email,
-//                 date: user.date,
-//                 role: user.role,
-//                 monthlySpent: user.monthlySpent.map(spent => ({
-//                     totalSpentt: spent.totalSpentt,
-//                     role: spent.role,
-//                     date: spent.date
-//                 }))
-//             };
-//         });
-
-//         res.send(modifiedResult);
-
     app.get("/userr/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email : email };
       try {
+        await connectToDatabase();
           const result = await usersInfocollection.findOne(filter);
           res.send(result);
       } catch (error) {
@@ -440,13 +380,6 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
-      const result = await usersInfocollection.findOne(filter);
-      res.send(result);
-    });
-
-    app.get("/users/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
       const result = await usersInfocollection.findOne(filter);
       res.send(result);
     });
@@ -552,8 +485,6 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
     });
     
     
-    
-
     app.post("/users/updateSellery", async (req, res) => {
       const { email, selleryData } = req.body;
   
@@ -1168,6 +1099,7 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
       }
     });
 
+    
     app.get("/myActivity/:email", async (req, res) => {
       const email = req.params.email;
     
@@ -1175,16 +1107,22 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
         return res.status(400).send({ message: "Email is required" });
       }
     
-      const filter = { email: email };
+      const filter = email === "all" ? {} : { email: email }; 
     
       try {
-        const result = await activityCollection.find(filter).toArray(); // Ensure collection is correct
+        const result = await activityCollection
+          .find(filter)
+          .sort({ date: -1 }) // Sort by date in descending order (latest first)
+          .limit(40) // Fetch only the latest 40 documents
+          .toArray();
+    
         res.send(result);
       } catch (error) {
         console.error("Error fetching data:", error);
         res.status(500).send({ message: "Error fetching data" });
       }
     });
+    
     
   
      ///////////////////////////////////////////////////////////////////
@@ -1339,112 +1277,251 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
 
 
 
-    app.get("/clients/homePage", async (req, res) => {
+    // app.get("/clients/homePage", async (req, res) => {
+    //   try {
+    //     await client.connect();
+    
+    //     const today = new Date();
+    //     const startOfToday = new Date(today.setHours(0, 0, 0, 0));  // Reset time to midnight for today
+    //     const startOfWeek = new Date(today);
+    //     startOfWeek.setDate(today.getDate() - today.getDay());  // Start of the current week (Sunday)
+    //     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);  // Start of the current month
+    
+    //     const payments = await clientCollection.aggregate([
+    //       { $unwind: "$payments" },
+    //       { $project: { paymentDate: { $toDate: "$payments.date" }, amount: "$payments.amount" } },
+    //       {
+    //         $group: {
+    //           _id: null,
+    //           todayTotal: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$amount", 0]
+    //             }
+    //           },
+    //           weeklyTotal: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$amount", 0]
+    //             }
+    //           },
+    //           monthlyTotal: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$amount", 0]
+    //             }
+    //           }
+    //         }
+    //       }
+    //     ]).toArray();
+    
+    //     // Fetch campaign spends and campaign counts
+    //     const campaignSpends = await clientCollection.aggregate([
+    //       { $unwind: "$campaings" },
+    //       { $project: { campaignDate: { $toDate: "$campaings.date" }, tSpent: "$campaings.tSpent" } },
+    //       {
+    //         $group: {
+    //           _id: null,
+    //           todaySpend: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfToday] }, { $toDouble: "$tSpent" }, 0]
+    //             }
+    //           },
+    //           weeklySpend: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfWeek] }, { $toDouble: "$tSpent" }, 0]
+    //             }
+    //           },
+    //           monthlySpend: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfMonth] }, { $toDouble: "$tSpent" }, 0]
+    //             }
+    //           },
+    //           todayCampaigns: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfToday] }, 1, 0]
+    //             }
+    //           },
+    //           weeklyCampaigns: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfWeek] }, 1, 0]
+    //             }
+    //           },
+    //           monthlyCampaigns: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$campaignDate", startOfMonth] }, 1, 0]
+    //             }
+    //           }
+    //         }
+    //       }
+    //     ]).toArray();
+    
+    //     // Fetch client counts by creation date
+    //     const clientCounts = await clientCollection.aggregate([
+    //       {
+    //         $project: {
+    //           createdAt: { $toDate: "$date" }  // Assuming you have a `createdAt` field
+    //         }
+    //       },
+    //       {
+    //         $group: {
+    //           _id: null,
+    //           todayClients: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0]
+    //             }
+    //           },
+    //           weeklyClients: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0]
+    //             }
+    //           },
+    //           monthlyClients: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0]
+    //             }
+    //           }
+    //         }
+    //       }
+    //     ]).toArray();
+
+    //     const adminPayments = await adminPaymentCollection.aggregate([
+    //       {
+    //         $project: { paymentDate: { $toDate: "$date" }, payAmount: { $toDouble: "$payAmount" } }
+    //       },
+    //       {
+    //         $group: {
+    //           _id: null,
+    //           todayAdminPay: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$payAmount", 0]
+    //             }
+    //           },
+    //           weeklyAdminPay: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$payAmount", 0]
+    //             }
+    //           },
+    //           monthlyAdminPay: {
+    //             $sum: {
+    //               $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$payAmount", 0]
+    //             }
+    //           }
+    //         }
+    //       }
+    //     ]).toArray();
+    
+    //     // Merge both payment, campaign, and client results
+    //     const result = {
+    //       today: payments[0]?.todayTotal || 0,
+    //       thisWeek: payments[0]?.weeklyTotal || 0,
+    //       thisMonth: payments[0]?.monthlyTotal || 0,
+    //       todaySpend: campaignSpends[0]?.todaySpend || 0,
+    //       thisWeekSpend: campaignSpends[0]?.weeklySpend || 0,
+    //       thisMonthSpend: campaignSpends[0]?.monthlySpend || 0,
+    //       todayCampaigns: campaignSpends[0]?.todayCampaigns || 0,
+    //       thisWeekCampaigns: campaignSpends[0]?.weeklyCampaigns || 0,
+    //       thisMonthCampaigns: campaignSpends[0]?.monthlyCampaigns || 0,
+    //       todayClients: clientCounts[0]?.todayClients || 0,
+    //       thisWeekClients: clientCounts[0]?.weeklyClients || 0,
+    //       thisMonthClients: clientCounts[0]?.monthlyClients || 0,
+    //       todayAdminPay: adminPayments[0]?.todayAdminPay || 0,
+    //       thisWeekAdminPay: adminPayments[0]?.weeklyAdminPay || 0,
+    //       thisMonthAdminPay: adminPayments[0]?.monthlyAdminPay || 0
+    //     };
+    
+    //     res.status(200).json(result);
+    
+    //   } catch (error) {
+    //     console.error("Error fetching data:", error);
+    //     res.status(500).json({ error: "Failed to fetch data" });
+    //   } finally {
+    //     await client.close();
+    //   }
+    // });
+    
+    app.get("/clients/homePage/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = email === "all" ? {} : { employeeEmail: email }; // Simplified filter
+    
       try {
         await client.connect();
     
         const today = new Date();
-        const startOfToday = new Date(today.setHours(0, 0, 0, 0));  // Reset time to midnight for today
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
         const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());  // Start of the current week (Sunday)
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);  // Start of the current month
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     
+        // Filter Payments
         const payments = await clientCollection.aggregate([
+          { $match: filter },
           { $unwind: "$payments" },
           { $project: { paymentDate: { $toDate: "$payments.date" }, amount: "$payments.amount" } },
           {
             $group: {
               _id: null,
               todayTotal: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$amount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$amount", 0] }
               },
               weeklyTotal: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$amount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$amount", 0] }
               },
               monthlyTotal: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$amount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$amount", 0] }
               }
             }
           }
         ]).toArray();
     
-        // Fetch campaign spends and campaign counts
+        // Filter Campaign Spends
         const campaignSpends = await clientCollection.aggregate([
+          { $match: filter },
           { $unwind: "$campaings" },
           { $project: { campaignDate: { $toDate: "$campaings.date" }, tSpent: "$campaings.tSpent" } },
           {
             $group: {
               _id: null,
               todaySpend: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfToday] }, { $toDouble: "$tSpent" }, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfToday] }, { $toDouble: "$tSpent" }, 0] }
               },
               weeklySpend: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfWeek] }, { $toDouble: "$tSpent" }, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfWeek] }, { $toDouble: "$tSpent" }, 0] }
               },
               monthlySpend: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfMonth] }, { $toDouble: "$tSpent" }, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfMonth] }, { $toDouble: "$tSpent" }, 0] }
               },
               todayCampaigns: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfToday] }, 1, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfToday] }, 1, 0] }
               },
               weeklyCampaigns: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfWeek] }, 1, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfWeek] }, 1, 0] }
               },
               monthlyCampaigns: {
-                $sum: {
-                  $cond: [{ $gte: ["$campaignDate", startOfMonth] }, 1, 0]
-                }
+                $sum: { $cond: [{ $gte: ["$campaignDate", startOfMonth] }, 1, 0] }
               }
             }
           }
         ]).toArray();
     
-        // Fetch client counts by creation date
+        // Filter Client Counts
         const clientCounts = await clientCollection.aggregate([
+          { $match: filter },
           {
             $project: {
-              createdAt: { $toDate: "$date" }  // Assuming you have a `createdAt` field
+              createdAt: { $toDate: "$date" }
             }
           },
           {
             $group: {
               _id: null,
-              todayClients: {
-                $sum: {
-                  $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0]
-                }
-              },
-              weeklyClients: {
-                $sum: {
-                  $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0]
-                }
-              },
-              monthlyClients: {
-                $sum: {
-                  $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0]
-                }
-              }
+              todayClients: { $sum: { $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0] } },
+              weeklyClients: { $sum: { $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0] } },
+              monthlyClients: { $sum: { $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0] } }
             }
           }
         ]).toArray();
-
+    
+        // Filter Admin Payments
         const adminPayments = await adminPaymentCollection.aggregate([
+          { $match: filter },
           {
             $project: { paymentDate: { $toDate: "$date" }, payAmount: { $toDouble: "$payAmount" } }
           },
@@ -1452,25 +1529,19 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
             $group: {
               _id: null,
               todayAdminPay: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$payAmount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfToday] }, "$payAmount", 0] }
               },
               weeklyAdminPay: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$payAmount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfWeek] }, "$payAmount", 0] }
               },
               monthlyAdminPay: {
-                $sum: {
-                  $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$payAmount", 0]
-                }
+                $sum: { $cond: [{ $gte: ["$paymentDate", startOfMonth] }, "$payAmount", 0] }
               }
             }
           }
         ]).toArray();
     
-        // Merge both payment, campaign, and client results
+        // Merge Results
         const result = {
           today: payments[0]?.todayTotal || 0,
           thisWeek: payments[0]?.weeklyTotal || 0,
@@ -1498,7 +1569,6 @@ app.get("/myUser/totalSpent/:email", async (req, res) => {
         await client.close();
       }
     });
-    
     
     
     
@@ -1655,7 +1725,7 @@ app.get("/clientsPageService/:role", async (req, res) => {
      });
 
 
-     app.get("/myclients/total/:email", async (req, res) => {
+    app.get("/myclients/total/:email", async (req, res) => {
       const email = req.params.email;
       const month = req.query.month && req.query.month !== "all" ? parseInt(req.query.month) : 0;
     
@@ -1674,6 +1744,9 @@ app.get("/clientsPageService/:role", async (req, res) => {
         const paymentData = clients.flatMap(client => client.payments || []);
         const paymentData2 = clients.flatMap(client => client.campaings || []);
     
+        // Debugging: Log the raw payment data
+        console.log("Payment Data:", paymentData);
+    
         const result = {
           spendTotal: paymentData2.reduce((acc, p) => acc + parseFloat(p.tSpent || 0), 0),
           spendBill: paymentData2.reduce(
@@ -1681,13 +1754,29 @@ app.get("/clientsPageService/:role", async (req, res) => {
             0
           ),
           bkashMarchent: paymentData.filter(p => p.paymentMethod === 'bkashMarchent')
-            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+            .reduce((acc, p) => {
+              const amount = parseFloat(p.amount || 0);
+              console.log(`bkashMarchent amount: ${amount}`);  // Debugging
+              return acc + amount;
+            }, 0),
           bkashPersonal: paymentData.filter(p => p.paymentMethod === 'bkashPersonal')
-            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+            .reduce((acc, p) => {
+              const amount = parseFloat(p.amount || 0);
+              console.log(`bkashPersonal amount: ${amount}`);  // Debugging
+              return acc + amount;
+            }, 0),
           nagadPersonal: paymentData.filter(p => p.paymentMethod === 'nagadPersonal')
-            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+            .reduce((acc, p) => {
+              const amount = parseFloat(p.amount || 0);
+              console.log(`nagadPersonal amount: ${amount}`);  // Debugging
+              return acc + amount;
+            }, 0),
           rocketPersonal: paymentData.filter(p => p.paymentMethod === 'rocketPersonal')
-            .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
+            .reduce((acc, p) => {
+              const amount = parseFloat(p.amount || 0);
+              console.log(`rocketPersonal amount: ${amount}`);  // Debugging
+              return acc + amount;
+            }, 0),
           IBBLBank: paymentData.filter(p => p.paymentMethod === 'IBBLBank')
             .reduce((acc, p) => acc + parseFloat(p.amount || 0), 0),
           bank: paymentData.filter(p => p.paymentMethod === 'bank')
@@ -1697,6 +1786,7 @@ app.get("/clientsPageService/:role", async (req, res) => {
           total: paymentData.reduce((acc, p) => acc + parseFloat(p.amount || 0), 0)
         };
     
+        console.log("Aggregated Result:", result); // Debugging: Check the final result
         res.json(result);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -1733,56 +1823,6 @@ app.get("/clientsPageService/:role", async (req, res) => {
           res.status(500).json({ message: "Error fetching data" });
       }
   });
-  
-    
-    
-
-
-  //   app.get("/myclients/:email", async (req, res) => {
-  //     const email = req.params.email;
-  
-  //     // Set the filter based on the email
-  //     const filter = email === "all" ? {} : { employeeEmail: email };
-  
-  //     try {
-  //         // Fetch users with projection
-  //         const users = await clientCollection
-  //             .find(filter, { projection: { ids:1, id:1, clientName: 1, _id: 1, date: 1, employeeEmail: 1,campaings:1,pageService:1, payments: 1 } })
-  //             .toArray();
-  
-  //         const transformedUsers = users.map(user => ({
-  //             _id: user._id,
-  //             id: user.id,
-  //             clientName: user.clientName,
-  //             date: user.date,
-  //             employeeEmail: user.employeeEmail,
-  //             payments: user.payments?.map(payment => ({
-  //                 amount: payment.amount,
-  //                 id: payment.id,
-  //                 ids: payment.ids,
-  //                 date:payment.date
-  //             })) || [],
-  //             campaings: user.campaings?.map(payment => ({
-  //                 tSpent: payment.tSpent,
-  //                 status: payment.status,
-  //                 dollerRate: payment.dollerRate,
-  //                 tBudged: payment.tBudged,
-  //                 date:payment.date
-  //             })) || [],
-  //             pageService: user.pageService?.map(payment => ({
-  //                 totalBill: payment.totalBill,
-  //                 status: payment.status,
-  //                 date:payment.date,
-  //             })) || []
-  //         }));
-  
-  //         res.send(transformedUsers);
-  //     } catch (error) {
-  //         console.error("Error fetching clients:", error);
-  //         res.status(500).send({ message: "Internal Server Error" });
-  //     }
-  // });
-  
   
 
     app.get("/myclients/:email", async (req, res) => {
@@ -1890,57 +1930,6 @@ app.get("/clientsPageService/:role", async (req, res) => {
     }
   });
   
-
-
-  // app.get("/client/:email", async (req, res) => {
-  //   const email = req.params.email ;
-  //   const page = parseInt(req.query.page) || 1 ;
-  //   const limit = parseInt(req.query.limit) || 40 ;
-  
-  //   const filter = email === "all" ? {} : { employeeEmail: email };
-  
-  //   try {
-
-  //     const totalItems = await clientCollection.countDocuments(filter);
-  
-  //     const result = await clientCollection
-  //       .find(filter)
-  //       .sort({ clientName: 1 }) 
-  //       .skip((page - 1) * limit)
-  //       .limit(limit)
-  //       .toArray();
-  
-  //     if (!result || result.length === 0) {
-  //       return res.status(404).send({ message: "No data found" });
-  //     }
-  
-  //     // Transform the result to include only specific fields
-  //     const transformedResult = result.map((client) => ({
-  //       _id: client._id,
-  //       clientName: client.clientName,
-  //       clientPhone:client.clientPhone,
-  //       id: client.id,
-  //       date: client.date,
-  //       employeeEmail: client.employeeEmail,
-  //       campaings: client.campaings || [],
-  //       pageService: client.pageService || [],
-  //       payments: client.payments || []
-  //     }));
-  
-  //     res.send({
-  //       data: transformedResult,
-  //       totalItems,
-  //       totalPages: Math.ceil(totalItems / limit),
-  //       currentPage: page,
-  //     });
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //     res.status(500).send({ message: "Error fetching data" });
-  //   }
-  // });
-
-
-
 
   app.get("/client/:email", async (req, res) => {
     const email = req.params.email;
@@ -2516,7 +2505,7 @@ app.get("/clientsPageService/:role", async (req, res) => {
       }
       });
 
-     app.patch('/clientPageService/updates/:userId/:ids', async (req, res) => {
+    app.patch('/clientPageService/updates/:userId/:ids', async (req, res) => {
     const { userId, ids } = req.params;
     const { itemName, pageUrl, totalBill, role, pageName } = req.body; 
 
@@ -2575,10 +2564,6 @@ app.get("/clientsPageService/:role", async (req, res) => {
         res.status(500).send({ message: "Error fetching data" });
     }
 });
-
-
-
-
 
 
 app.get("/adminPay/total/monthly/:email", async (req, res) => {
@@ -2667,8 +2652,6 @@ app.get("/adminPay/total/:email", async (req, res) => {
 });
 
 
-
-
 app.get("/adminPay/:email", async (req, res) => {
   const email = req.params.email;
   const paymentMethod = req.query.method;
@@ -2715,14 +2698,6 @@ app.get("/adminPay/:email", async (req, res) => {
     res.status(500).send({ message: "Error fetching data" });
   }
 });
-
-
-
-
-
-
-
-
 
 
 app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
@@ -2867,14 +2842,6 @@ app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
     }
 });
 
-
-  app.get("/contributorPayment/:email", async (req, res) => {
-    const email = req.params.email;
-    const filter = { employeeEmail: email };
-    const result = await ContributorPaymentCollection.findOne(filter);
-    res.send(result);
-  });
-
   app.get("/contributorPayment/:id", async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
@@ -2964,12 +2931,6 @@ app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
     res.send(result);
   });
   
-
-  app.get("/salaryPayment", async (req, res) => {
-    const result = await salaryPaymentCollection.find().toArray();
-    res.send(result);
-  });
-
   app.get("/MySalaryPayment/:email", async (req, res) => {
     const email = req.params.email;
     const filter = email === "all" ? {} : { employeeEmail: email };
@@ -3081,12 +3042,6 @@ app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
       res.send(result);
     });
 
-    app.get("/adsAccount", async (req, res) => {
-      const email = req.query.email;
-      const query = { employeeEmail: email };
-      const result = await adsAccountCollection.find(query).toArray();
-      res.send(result);
-    });
 
     app.get("/myAdsAccount/:email", async (req, res) => {
       const email = req.params.email;
@@ -3156,118 +3111,6 @@ app.get("/MyEmployeePaymentsCharge/:email", async (req, res) => {
     });
 
 
-
-    ////////////////////////////////////////////////////////
-    //                 ads ad account center
-    ////////////////////////////////////////////////////////
-
-    app.post("/adsAccountCenter", async (req, res) => {
-      const filter = req.body;
-      const result = await adsAccountCenterCollection.insertOne(filter);
-      res.send(result);
-    });
-
-    app.get("/adsAccountCenter", async (req, res) => {
-      const result = await adsAccountCenterCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get("/adsAccountCenter", async (req, res) => {
-      const email = req.query.email;
-      const query = { employeeEmail: email };
-      const result = await adsAccountCenterCollection.find(query).toArray();
-      res.send(result);
-    });
-
-    app.get("/adsAccountCenter/:email", async (req, res) => {
-      const email = req.params.email;
-      const filter = { employeeEmail: email };
-      const result = await adsAccountCenterCollection.findOne(filter);
-      res.send(result);
-    });
-    app.delete("/adsAccountCenter/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await adsAccountCenterCollection.deleteOne(filter);
-      res.send(result);
-    });
-
-    app.patch("/adsAccountCenter/status/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          status: body.status,
-        },
-      };
-
-      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.patch("/adsAccountCenter/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          accountName: body.accountName,
-          paymentDate: body.paymentDate,
-          threshold: body.threshold,
-          currentBallence: body.currentBallence,
-          totalSpent: body.totalSpent,
-          dollerRate: body.dollerRate,
-          status: body.status,
-        },
-      };
-
-      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-    app.put("/adsAccountCenter/currentBalance/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          currentBallence: body.currentBallence,
-        },
-      };
-
-      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-    app.put("/adsAccountCenter/threshold/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          threshold: body.threshold,
-        },
-      };
-
-      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-    app.put("/adsAccountCenter/totalSpent/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const body = req.body;
-      const updatenew = {
-        $set: {
-          totalSpent: body.totalSpent,
-        },
-      };
-
-      const result = await adsAccountCenterCollection.updateOne(filter, updatenew);
-      res.send(result);
-    });
-
-     
-   
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
